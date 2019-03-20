@@ -187,7 +187,7 @@ class Zframe_rasterLogic(ScriptedLoadableModuleLogic):
     meshBounds = (np.array(inputMesh.GetPolyData().GetBounds())*1.5).tolist()
     logging.info("bounds: %s"%str(meshBounds))
     mvSpacing = movingVolume.GetSpacing()
-    
+
     rasterExtent = [0, int(round((abs(meshBounds[0])+abs(meshBounds[1]))/mvSpacing[0])),
                     0, int(round((abs(meshBounds[2])+abs(meshBounds[3]))/mvSpacing[1])),
                     0, int(round((abs(meshBounds[4])+abs(meshBounds[5]))/mvSpacing[2]))
@@ -198,38 +198,42 @@ class Zframe_rasterLogic(ScriptedLoadableModuleLogic):
     logging.info('spacing %s'%str(movingVolume.GetSpacing()))
 
     refImage=vtk.vtkImageData()
-    #refImage.SetSpacing(movingVolume.GetSpacing())
+    refImage.SetSpacing(mvSpacing)
     refImage.SetExtent(rasterExtent)
-    #refImage.SetOrigin(rasterOrigin)
+    refImage.SetOrigin(rasterOrigin)
     refImage.AllocateScalars(vtk.VTK_UNSIGNED_CHAR, 1)
 
+    poly2stencil = vtk.vtkPolyDataToImageStencil()
+    poly2stencil.SetInputData(inputMesh.GetPolyData())
+    poly2stencil.SetOutputOrigin(rasterOrigin)
+    poly2stencil.SetOutputSpacing(mvSpacing)
+    poly2stencil.SetOutputWholeExtent(rasterExtent)
+    poly2stencil.Update()
+
+    imageStencil= vtk.vtkImageStencil()
+    imageStencil.SetInputData(refImage)
+    imageStencil.SetStencilConnection(poly2stencil.GetOutputPort())
+    imageStencil.ReverseStencilOn()
+    imageStencil.SetBackgroundValue(255)
+    imageStencil.Update()
+
+    refImage.ShallowCopy(imageStencil.GetOutput())
+    refImage.SetSpacing([1.0,1.0,1.0])
+    refImage.SetOrigin([0.0,0.0,0.0])
+
     outputVolume.SetAndObserveImageData(refImage)
-    
-    #outputVolume.SetOrigin(rasterOrigin)
+
     ijkToRas = vtk.vtkMatrix4x4()
-    for i,val in enumerate([-1, 0, 0, -rasterOrigin[0],
+    for i,val in enumerate([1, 0, 0, rasterOrigin[0],
                             0, 1, 0, rasterOrigin[1],
                             0, 0, 1, rasterOrigin[2],
                             0,0,1, 0]):
         ijkToRas.SetElement(int(i/4), i%4, val)
-    
-    #for i,val in enumerate([-1, 0, 0, 0,
-                            #0, 1, 0, 0,
-                            #0, 0, 1,  0,
-                            #0,0,1, 0]):
-        #ijkToRas.SetElement(int(i/4), i%4, val)
-        
+
     logging.info(ijkToRas)
     outputVolume.SetIJKToRASMatrix(ijkToRas)
     outputVolume.SetSpacing(movingVolume.GetSpacing()) # WARNING: SetSpacing HAS TO BE after SetIJKToRASMatrix
 
-    
-
-
-    #output.ShallowCopy(imageStencil.GetOutput())
-    
-    
-    
     logging.info('Processing completed')
 
     return True

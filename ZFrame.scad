@@ -1,8 +1,8 @@
 
-RODS_DIAM = 10;
+RODS_DIAM = 2;
 N_HEIGHT=120;
 N_WIDTH=120;
-BOX_XLEN=190    ;
+BOX_XLEN=230    ;
 BOX_YLEN=190;
 BOX_ZLEN=190;
 
@@ -22,7 +22,7 @@ module zFiducial(rodD, nHeight, nWidth){
     translate([-nWidth/2, 0, nHeight/2]) sphere(d=rodD, $fn=32);
 }
 
-union(){
+rotate([0,0,90]) union(){
     translate([0, -BOX_YLEN/2, 0]) 
         zFiducial(rodD=RODS_DIAM, nHeight=N_HEIGHT, nWidth=N_WIDTH);
     translate([0, BOX_YLEN/2, 0]) 
