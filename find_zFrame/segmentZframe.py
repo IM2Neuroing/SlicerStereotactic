@@ -61,24 +61,17 @@ def segment_zFrame(in_img, img_type='MR', withPlots=False):
     spacing_mm = in_img.GetSpacing()
 
     stats = sitk.LabelShapeStatisticsImageFilter()
+    stats.SetComputeOrientedBoundingBox(True)
     connectedComponentImage = sitk.ConnectedComponent(thresh_img)
-
+    
     stats.Execute(connectedComponentImage)
-
     labelBBox_voxel = np.array([ stats.GetBoundingBox(l) for l in stats.GetLabels()])
     
-    labelBBox_size_mm = labelBBox_voxel[:,3:]*spacing_mm
+    #labelBBox_size_mm = labelBBox_voxel[:,3:]*spacing_mm
+    labelBBox_size_mm = np.array([ stats.GetOrientedBoundingBoxSize(l) for l in stats.GetLabels()])
 
-
-    #calculate the start and end points of bboxes to detect labels on the edge of the image.
-    labelBBox_startEnd = labelBBox_voxel                                                                                                                          
-    labelBBox_startEnd[:,3:]+=labelBBox_voxel[:,:3]
-
-    labelByBorder_mask=np.logical_not(np.any(labelBBox_startEnd==0, axis=1))
-    labelBySize_mask=np.any(labelBBox_size_mm>100, axis=1)&np.any(labelBBox_size_mm<20, axis=1)
-
-    labelToKeep_mask = np.logical_and(labelByBorder_mask, labelBySize_mask)
-
+    labelToKeep_mask = np.sum(labelBBox_size_mm>120, axis=1)==2
+    
     connected_labelMap = sitk.LabelImageToLabelMap(connectedComponentImage)
 
     label_renameMap = sitk.DoubleDoubleMap()
