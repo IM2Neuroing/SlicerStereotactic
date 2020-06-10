@@ -75,6 +75,7 @@ class find_zFrameWidget(ScriptedLoadableModuleWidget):
         self.outSegmentSelector.nodeTypes = ["vtkMRMLScalarVolumeNode"]
         self.outSegmentSelector.selectNodeUponCreation = True
         self.outSegmentSelector.addEnabled = True
+        self.outSegmentSelector.editEnabled = True
         self.outSegmentSelector.removeEnabled = True
         self.outSegmentSelector.noneEnabled = False
         self.outSegmentSelector.showHidden = False
@@ -90,6 +91,7 @@ class find_zFrameWidget(ScriptedLoadableModuleWidget):
         self.outSegmtModelSelector.nodeTypes = ["vtkMRMLModelNode"]
         self.outSegmtModelSelector.selectNodeUponCreation = True
         self.outSegmtModelSelector.addEnabled = True
+        self.outSegmtModelSelector.editEnabled = True
         self.outSegmtModelSelector.removeEnabled = True
         self.outSegmtModelSelector.noneEnabled = False
         self.outSegmtModelSelector.showHidden = False
@@ -113,7 +115,7 @@ class find_zFrameWidget(ScriptedLoadableModuleWidget):
         segmentationFormLayout.addRow("Image modality: ", self.imgTypeHBox)
         
         self.inputSelector.connect('currentNodeChanged(vtkMRMLNode*)', self.onInputSelectorChanged)
-        
+        self.onInputSelectorChanged(self.inputSelector.currentNode())
         
         #
         # Apply Button
@@ -175,7 +177,7 @@ class find_zFrameWidget(ScriptedLoadableModuleWidget):
         self.outIdealModelSelector.showChildNodeTypes = False
         self.outIdealModelSelector.setMRMLScene( slicer.mrmlScene )
         self.outIdealModelSelector.setToolTip( "Pick the output model." )
-        self.outIdealModelSelector.baseName = 'zFrame_ideal'
+        self.outIdealModelSelector.baseName = 'zFrameIdeal'
         frameGenFormLayout.addRow("Output model: ", self.outIdealModelSelector)
         
         self.genModel = qt.QPushButton('Generate Model')
@@ -231,7 +233,7 @@ class find_zFrameWidget(ScriptedLoadableModuleWidget):
         self.outputTransformSelector.showHidden = False
         self.outputTransformSelector.showChildNodeTypes = False
         self.outputTransformSelector.setMRMLScene( slicer.mrmlScene )
-        self.outputTransformSelector.baseName = "LPS2PatientLeksell"
+        self.outputTransformSelector.baseName = "zFrame_registration"
         self.outputTransformSelector.setToolTip( "transform that alignes moving to fixed" )
         frameRegFormLayout.addRow("Output transform: ", self.outputTransformSelector)
         
@@ -243,6 +245,67 @@ class find_zFrameWidget(ScriptedLoadableModuleWidget):
         self.fixedZselector.connect("currentNodeChanged(vtkMRMLNode*)", self.onfixedZselectionChanged)
         
         self.registerPushButton.connect('clicked(bool)', self.onRegisterPushButtonClicked)
+        
+        
+        ###################################################################################################
+        
+        stereoPointsAdd_collbtn = ctk.ctkCollapsibleButton()
+        stereoPointsAdd_collbtn.text = 'enter stereotactic points'
+        self.layout.addWidget(stereoPointsAdd_collbtn)
+        
+        
+        self.stereoPointsVBoxLayout = qt.QVBoxLayout(stereoPointsAdd_collbtn)
+        self.stereoPointsFormLayout = qt.QFormLayout()
+        self.pointTableView = slicer.qMRMLTableView()        
+        self.stereoPointsVBoxLayout.addLayout(self.stereoPointsFormLayout)
+        self.stereoPointsVBoxLayout.addWidget(self.pointTableView)
+        
+        
+        self.fiducialSelectionCombo = slicer.qMRMLNodeComboBox()
+        self.fiducialSelectionCombo.nodeTypes = ['vtkMRMLMarkupsFiducialNode']  
+        self.fiducialSelectionCombo.selectNodeUponCreation = True
+        self.fiducialSelectionCombo.noneEnabled = False
+        self.fiducialSelectionCombo.showHidden = False
+        self.fiducialSelectionCombo.showChildNodeTypes = False
+        self.fiducialSelectionCombo.setMRMLScene( slicer.mrmlScene )
+        self.fiducialSelectionCombo.baseName = 'Stereotactic_points'
+        self.fiducialSelectionCombo.setToolTip( "select fiducial node for coordinates conversion" )
+        self.stereoPointsFormLayout.addRow('fiducial group', self.fiducialSelectionCombo)
+        
+        self.NewPointHBox = qt.QHBoxLayout()
+        
+        self.nameField= qt.QLineEdit()
+        self.nameField.setPlaceholderText('Add new point')
+        self.NewPointHBox.addWidget(self.nameField)
+        
+        self.xLabel = qt.QLabel('X')
+        self.xLabel.setAlignment(qt.Qt.AlignRight | qt.Qt.AlignVCenter)
+        self.xField = qt.QDoubleSpinBox()
+        self.xField.setMaximum(999.99)
+        self.NewPointHBox.addWidget(self.xLabel)
+        self.NewPointHBox.addWidget(self.xField)
+        
+        self.yLabel = qt.QLabel('Y')
+        self.yLabel.setAlignment(qt.Qt.AlignRight | qt.Qt.AlignVCenter)
+        self.yField = qt.QDoubleSpinBox()
+        self.yField.setMaximum(999.99)
+        self.NewPointHBox.addWidget(self.yLabel)
+        self.NewPointHBox.addWidget(self.yField)
+        
+        self.zLabel = qt.QLabel('Z')
+        self.zLabel.setAlignment(qt.Qt.AlignRight | qt.Qt.AlignVCenter)
+        self.zField = qt.QDoubleSpinBox()
+        self.zField.setMaximum(999.99)
+        self.NewPointHBox.addWidget(self.zLabel)
+        self.NewPointHBox.addWidget(self.zField)
+        
+        self.addBtn = qt.QPushButton('+')
+        self.NewPointHBox.addWidget(self.addBtn)
+        
+        self.stereoPointsVBoxLayout.addLayout(self.NewPointHBox)
+        
+        self.fiducialSelectionCombo.connect('currentNodeChanged(vtkMRMLNode*)', self.onFiducialSelectedChanged)
+        self.addBtn.connect('clicked(bool)', self.onAddBtnClicked)
         
         
         ###################################################################################################
@@ -340,9 +403,168 @@ class find_zFrameWidget(ScriptedLoadableModuleWidget):
         self.logic.run_zFrameRegistration(self.movingZselector.currentNode(),
                                           self.fixedZselector.currentNode(),
                                           self.outputTransformSelector.currentNode())
-        slicer.util.loadTransform(os.path.join(os.path.split(__file__)[0], 'Ressources/Leksell_Frame/leksell2LPS.h5'))
+        slicer.util.loadTransform(os.path.join(os.path.split(__file__)[0], 'Ressources/Leksell_Frame/leksell2RAS.h5'))
+    
+    #########################################################################################################
+    
+    def onFiducialSelectedChanged(self, newNode):
+        #print('selection changed !')
+        coordTableName = newNode.GetName() + "_coordsConversion"
+        #print('looking for '+coordTableName)
+        
+        if slicer.mrmlScene.GetNodesByName(coordTableName).GetNumberOfItems() == 0:
+            #print('create new table')
+            coordTable = slicer.vtkMRMLTableNode()
+            coordTable.SetName(coordTableName)
+            for col in ['Marker', 'X', 'Y', 'Z', 'R', 'A', 'S', 'i', 'j', 'k']:
+                c = coordTable.AddColumn()
+                c.SetName(col)
+            
+            slicer.mrmlScene.AddNode(coordTable)
+        else:
+            #print('found it !')
+            coordTable = slicer.mrmlScene.GetNodesByName(coordTableName).GetItemAsObject(0)
+        
+        #first populate the table with the markers in the fiducialNode
+        #self.fiducial2Table(coordTable, newNode)
+
+        
+        
+        
+        self.pointTableView.setMRMLTableNode(coordTable)
+        self.pointTableView.setFirstRowLocked(True)
+        self.pointTableView.show()
+    def onAddBtnClicked(self):
+        xyzCoord = [self.xField.value,self.yField.value,self.zField.value]
+        
+        coordTable = slicer.mrmlScene.GetNodesByName(self.fiducialSelectionCombo.currentNode().GetName() + "_coordsConversion").GetItemAsObject(0)
+        
+        self.addPointFromXYZ(coordTable, xyzCoord, self.nameField.text)
+        
+        self.table2Fiducial(coordTable, self.fiducialSelectionCombo.currentNode())
+        
+        #self.fiducial2Table(coordTable, self.fiducialSelectionCombo.currentNode())        
+        
+        self.nameField.setText('')
+        self.xField.setValue(0.0)
+        self.yField.setValue(0.0)
+        self.zField.setValue(0.0)
 
 
+    def addPointFromXYZ(self, tableNode, xyz, label):
+        [R,A,S] = self.XYZtoRAS(xyz)
+        
+        print('in patient space: R,A,S: %s'%str(self.RAStoRASpat(self.XYZtoRAS(xyz))))
+              
+        [i,j,k] = self.RASpatToIJK(self.RAStoRASpat(self.XYZtoRAS(xyz)))
+        r = tableNode.AddEmptyRow()
+        tableNode.SetCellText(r, tableNode.GetColumnIndex('Marker'), label)
+        tableNode.SetCellText(r, tableNode.GetColumnIndex('X'), '%.02f'%xyz[0])
+        tableNode.SetCellText(r, tableNode.GetColumnIndex('Y'), '%.02f'%xyz[1])
+        tableNode.SetCellText(r, tableNode.GetColumnIndex('Z'), '%.02f'%xyz[2])        
+        tableNode.SetCellText(r, tableNode.GetColumnIndex('R'), '%.02f'%R)
+        tableNode.SetCellText(r, tableNode.GetColumnIndex('A'), '%.02f'%A)
+        tableNode.SetCellText(r, tableNode.GetColumnIndex('S'), '%.02f'%S)
+        tableNode.SetCellText(r, tableNode.GetColumnIndex('i'), '%.02f'%i)
+        tableNode.SetCellText(r, tableNode.GetColumnIndex('j'), '%.02f'%j)
+        tableNode.SetCellText(r, tableNode.GetColumnIndex('k'), '%.02f'%k)
+        
+
+
+    def fiducial2Table(self, tableNode, fiducialNode):
+        for iRow in range(tableNode.GetNumberOfRows()):
+            tableNode.RemoveRow(0) #always remove the first
+        for iFiducial in range(fiducialNode.GetNumberOfFiducials()):
+            thisPosRAS = [0,0,0]
+            fiducialNode.GetNthFiducialPosition(iFiducial, thisPosRAS)
+            thisLabel = fiducialNode.GetNthFiducialLabel(iFiducial)
+            
+            r = tableNode.AddEmptyRow()
+            tableNode.SetCellText(r, tableNode.GetColumnIndex('Marker'), thisLabel)
+            tableNode.SetCellText(r, tableNode.GetColumnIndex('R'), '%.02f'%thisPosRAS[0])
+            tableNode.SetCellText(r, tableNode.GetColumnIndex('A'), '%.02f'%thisPosRAS[1])
+            tableNode.SetCellText(r, tableNode.GetColumnIndex('S'), '%.02f'%thisPosRAS[2])
+    
+    def table2Fiducial(self, tableNode, fiducialNode):
+        fiducialNode.RemoveAllMarkups()
+        
+        for iRow in range(tableNode.GetNumberOfRows()):
+            fiducialNode.AddPointToNewMarkup(vtk.vtkVector3d([float(tableNode.GetCellText(iRow, tableNode.GetColumnIndex('R'))),
+                                                              float(tableNode.GetCellText(iRow, tableNode.GetColumnIndex('A'))),
+                                                              float(tableNode.GetCellText(iRow, tableNode.GetColumnIndex('S'))),
+                                                              ]),
+                                            tableNode.GetCellText(iRow, tableNode.GetColumnIndex('Marker'))
+                                            )
+        fiducialNode.SetNthMarkupLocked(fiducialNode.GetNumberOfFiducials()-1, True)
+    
+            
+    def XYZtoRAS(self, xyz):
+        import numpy as np
+        
+        if slicer.mrmlScene.GetNodesByName('leksell2RAS').GetNumberOfItems() == 0:
+            slicer.util.loadTransform(os.path.join(os.path.split(__file__)[0], 'Ressources/Leksell_Frame/leksell2RAS.h5'))
+        
+        leksell2ras = self.transformNode_to_numpy4x4(slicer.mrmlScene.GetNodesByName('leksell2RAS').GetItemAsObject(0))
+
+        return np.dot(leksell2ras, np.array(xyz+[1])).tolist()[:3]
+    
+    def RAStoRASpat(self, xyz):
+        import numpy as np
+        print(xyz)
+        ras2patLeksell = self.transformNode_to_numpy4x4(self.outputTransformSelector.currentNode())
+        
+        return np.dot(ras2patLeksell, np.array(xyz+[1])).tolist()[:3]
+    
+    def RASpatToIJK(self, xyz):
+        import numpy as np
+        import sitkUtils as siu
+        
+        vol = siu.PullVolumeFromSlicer(self.inputSelector.currentNode().GetName())
+        IJKtoPatRAS = np.zeros([4,4])
+        IJKtoPatRAS[:3,:3] = np.array(vol.GetDirection()).reshape([3,3])
+        IJKtoPatRAS[:3,3] = np.array(vol.GetOrigin())
+        IJKtoPatRAS[3,3]=1
+        
+        
+        #vtkMat = vtk.vtkMatrix4x4()
+        #self.inputSelector.currentNode().GetIJKToRASDirectionMatrix(vtkMat)
+        #IJKtoPatRAS = np.array([vtkMat.GetElement(i,j) for i in range(4)for j in range(4)]).reshape([4,4])
+        #print(IJKtoPatRAS)
+        
+        ##################################################################################################################
+        ########## WARNING We add the LPS2RAS matrix in between, this has been determined experimentally with the code:
+        
+        ########CT_mrml = slicer.mrmlScene.GetNodesByName('CTpreop_(CT)').GetItemAsObject(0)
+        ########mat=vtk.vtkMatrix4x4()
+        ########CT_mrml.GetIJKToRASDirectionMatrix(mat)
+        ########CT_mrml = np.array([mat.GetElement(i,j) for i in range(4)for j in range(4)]).reshape([4,4])
+        
+        ########CT_itk = siu.PullVolumeFromSlicer('CTpreop_(CT)')
+        ########CT_ijk2ras = np.zeros([4,4])
+        ########CT_ijk2ras[:3,:3] = np.array(CT_itk.GetDirection()).reshape([3,3])
+        ########CT_ijk2ras[:3,3] = np.array(CT_itk.GetOrigin())
+        ########CT_ijk2ras[3,3]=1
+        
+        #########divide the twomatrices and round:
+        ########np.dot(CT_ijk2ras, np.linalg.inv(CT_mrml))
+        ##################################################################################################################
+        
+        LPS2RAS = np.array([-1,0,0,0, 0,-1,0,0, 0,0,1,0, 0,0,0,1]).reshape([4,4])
+        
+        #return np.dot(np.linalg.inv(IJKtoPatRAS), np.dot( np.linalg.inv(LPS2RAS), np.array(xyz+[1]))).tolist()[:3]
+        return np.dot(np.linalg.inv(IJKtoPatRAS), np.dot(LPS2RAS, np.array(xyz+[1]))).tolist()[:3]
+
+    
+    def transformNode_to_numpy4x4(self, node):
+        import numpy as np
+        from vtk import vtkMatrix4x4
+        vtkMat = vtkMatrix4x4()
+        node.GetMatrixTransformFromWorld(vtkMat)
+        
+        return np.array([vtkMat.GetElement(i,j) for i in range(4)for j in range(4)]).reshape([4,4])
+        
+        
+        
 
     def cleanup(self):
         pass
