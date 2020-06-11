@@ -401,7 +401,7 @@ class find_zFrameLogic(ScriptedLoadableModuleLogic):
         logging.info('Fiducial segmentation started')
 
         # Compute the thresholded output volume using the Threshold Scalar Volume CLI module
-        from segmentZframe import segment_zFrame_slicer
+        from Ressources.segmentZframe import segment_zFrame_slicer
         segment_zFrame_slicer(inputVolume, outputVolume, imgType)
         
         # create a segmentation to show the frame in 3d
