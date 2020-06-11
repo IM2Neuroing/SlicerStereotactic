@@ -20,6 +20,7 @@ include(${Slicer_USE_FILE})
 #-----------------------------------------------------------------------------
 # Extension modules
 add_subdirectory(find_zFrame)
+add_subdirectory(stereo_points)
 ## NEXT_MODULE
 
 #-----------------------------------------------------------------------------
