@@ -146,7 +146,10 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
         
     def onFiducialSelectedChanged(self, newNode):
         #print('selection changed !')
-        coordTableName = newNode.GetName() + "_coordsConversion"
+        if(type(newNode) == type(slicer.vtkMRMLMarkupsFiducialNode())):
+            coordTableName = newNode.GetName() + "_coordsConversion"
+        else:
+            return
         #print('looking for '+coordTableName)
         
         if slicer.mrmlScene.GetNodesByName(coordTableName).GetNumberOfItems() == 0:
