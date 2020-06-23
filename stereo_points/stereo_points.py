@@ -45,8 +45,6 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
         self.stereoPointsVBoxLayout = qt.QVBoxLayout(stereoPointsAdd_collbtn)
         self.stereoPointsFormLayout = qt.QFormLayout()
         self.pointTableView = slicer.qMRMLTableView()                
-        self.stereoPointsVBoxLayout.addLayout(self.stereoPointsFormLayout)
-        self.stereoPointsVBoxLayout.addWidget(self.pointTableView)
         
         self.referenceImage_selectionCombo = slicer.qMRMLNodeComboBox()
         self.referenceImage_selectionCombo.nodeTypes = ['vtkMRMLScalarVolumeNode']    
@@ -81,6 +79,9 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
         self.fiducialGroup_selectionCombo.setToolTip( "Select fiducial node for coordinates conversion" )
         self.stereoPointsFormLayout.addRow('Fiducial group', self.fiducialGroup_selectionCombo)
         
+        self.stereoPointsVBoxLayout.addLayout(self.stereoPointsFormLayout)
+        self.stereoPointsVBoxLayout.addWidget(self.pointTableView)
+        
         self.NewPointHBox = qt.QHBoxLayout()
         
         self.nameField= qt.QLineEdit()
@@ -114,10 +115,8 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
         self.stereoPointsVBoxLayout.addLayout(self.NewPointHBox)
         
         self.disorient_btn = qt.QPushButton('Disorient ref image')
-        self.disorient_btn.setToolTip("In order to use the ijk coordinates, the IJK2RAS transform will be removed from the reference image selected and a new volume will be created. This volume will be of no use in Slicer, but can be loaded in not medicalimaging softwares (paraview, matlab...). This will also copy the coordsConversion table to a new name in case you want to save it.")
+        self.disorient_btn.setToolTip("In order to use the ijk coordinates, the IJK2RAS transform will be removed from the reference image selected and a new volume will be created. This volume will be of no use in Slicer, but can be loaded in not medical imaging softwares (paraview, matlab...). This will also copy the coordsConversion table to a new name in case you want to save it.")
         self.stereoPointsVBoxLayout.addWidget(self.disorient_btn)
-        
-        
         
         self.referenceImage_selectionCombo.connect('currentNodeChanged(vtkMRMLNode*)', self.onReferenceImageSelectedChanged)
         self.frameTransform_selectionCombo.connect('currentNodeChanged(vtkMRMLNode*)', self.onFrameTransformSelectedChanged)
@@ -132,7 +131,6 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
     # connections
 
     #########################################################################################################
-    
     def onReferenceImageSelectedChanged(self, newNode):
         #coordTable = slicer.mrmlScene.GetNodesByName(self.fiducialGroup_selectionCombo.currentNode().GetName() + "_coordsConversion").GetItemAsObject(0)
         coordTable = slicer.mrmlScene.GetNodeByID(
@@ -193,7 +191,7 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
     
         
     def findMatchingNodeInIdTupleList(self, tupleList, search):
-        print('looking for '+str(search)+ ' in '+str(tupleList))
+        #print('looking for '+str(search)+ ' in '+str(tupleList))
         return [j for j in [i for i in tupleList if search in i][0] if j != search][0]
         
     def onAddBtnClicked(self):
@@ -296,7 +294,7 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
     
     def RAStoRASpat(self, xyz):
         import numpy as np
-        print(xyz)
+        #print(xyz)
         ras2patLeksell = self.transformNode_to_numpy4x4(self.frameTransform_selectionCombo.currentNode())
         
         return np.dot(ras2patLeksell, np.array(xyz+[1])).tolist()[:3]
