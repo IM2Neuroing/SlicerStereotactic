@@ -425,7 +425,9 @@ class find_zFrameLogic(ScriptedLoadableModuleLogic):
         effect.setParameter("MaximumThreshold",str(maxVal))
         zFrameSegmentationNode.CreateClosedSurfaceRepresentation()
         effect.self().onApply()
-        outputModel.SetAndObservePolyData(zFrameSegmentationNode.GetClosedSurfaceRepresentation(zFrameSegmentationNode.GetSegmentation().GetNthSegmentID(0)))
+        framePoly = vtk.vtkPolyData()
+        zFrameSegmentationNode.GetClosedSurfaceRepresentation(zFrameSegmentationNode.GetSegmentation().GetNthSegmentID(0), framePoly)
+        outputModel.SetAndObservePolyData(framePoly)
         outputModel.CreateDefaultDisplayNodes()
         zFrameSegmentationNode.SetDisplayVisibility(False)
         
