@@ -82,37 +82,59 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
         self.stereoPointsVBoxLayout.addLayout(self.stereoPointsFormLayout)
         self.stereoPointsVBoxLayout.addWidget(self.pointTableView)
         
-        self.NewPointHBox = qt.QHBoxLayout()
+        self.NewPointGLay = qt.QGridLayout()
         
         self.nameField= qt.QLineEdit()
         self.nameField.setPlaceholderText('Add new point')
-        self.NewPointHBox.addWidget(self.nameField)
+        self.NewPointGLay.addWidget(self.nameField, 0,0,2,1)
         
         self.xLabel = qt.QLabel('X')
         self.xLabel.setAlignment(qt.Qt.AlignRight | qt.Qt.AlignVCenter)
         self.xField = qt.QDoubleSpinBox()
-        self.xField.setMaximum(999.99)
-        self.NewPointHBox.addWidget(self.xLabel)
-        self.NewPointHBox.addWidget(self.xField)
+        self.xField.setRange(0.0, 999.99)
+        self.NewPointGLay.addWidget(self.xLabel, 0,1)
+        self.NewPointGLay.addWidget(self.xField, 0,2)
         
         self.yLabel = qt.QLabel('Y')
         self.yLabel.setAlignment(qt.Qt.AlignRight | qt.Qt.AlignVCenter)
         self.yField = qt.QDoubleSpinBox()
-        self.yField.setMaximum(999.99)
-        self.NewPointHBox.addWidget(self.yLabel)
-        self.NewPointHBox.addWidget(self.yField)
+        self.yField.setRange(0.0, 999.99)
+        self.NewPointGLay.addWidget(self.yLabel, 0,3)
+        self.NewPointGLay.addWidget(self.yField, 0,4)
         
         self.zLabel = qt.QLabel('Z')
         self.zLabel.setAlignment(qt.Qt.AlignRight | qt.Qt.AlignVCenter)
         self.zField = qt.QDoubleSpinBox()
-        self.zField.setMaximum(999.99)
-        self.NewPointHBox.addWidget(self.zLabel)
-        self.NewPointHBox.addWidget(self.zField)
+        self.zField.setRange(0.0, 999.99)
+        self.NewPointGLay.addWidget(self.zLabel,0,5)
+        self.NewPointGLay.addWidget(self.zField,0,6)
+        
+        self.ringLabel = qt.QLabel('Ring')
+        self.ringLabel.setAlignment(qt.Qt.AlignRight | qt.Qt.AlignVCenter)
+        self.ringField = qt.QDoubleSpinBox()
+        self.ringField.setRange(0.0, 180.00)
+        self.NewPointGLay.addWidget(self.ringLabel, 1,1)
+        self.NewPointGLay.addWidget(self.ringField, 1,2)
+        
+        self.arcLabel = qt.QLabel('Arc')
+        self.arcLabel.setAlignment(qt.Qt.AlignRight | qt.Qt.AlignVCenter)
+        self.arcField = qt.QDoubleSpinBox()
+        self.arcField.setRange(0.0, 180.00)
+        self.NewPointGLay.addWidget(self.arcLabel, 1,3)
+        self.NewPointGLay.addWidget(self.arcField, 1,4)
+        
+        self.depthLabel = qt.QLabel('Depth')
+        self.depthLabel.setAlignment(qt.Qt.AlignRight | qt.Qt.AlignVCenter)
+        self.depthField = qt.QDoubleSpinBox()
+        self.depthField.setRange(-999.99, 999.99)
+        self.NewPointGLay.addWidget(self.depthLabel,1,5)
+        self.NewPointGLay.addWidget(self.depthField,1,6)
+        
         
         self.addBtn = qt.QPushButton('+')
-        self.NewPointHBox.addWidget(self.addBtn)
+        self.NewPointGLay.addWidget(self.addBtn, 0,7,2,1)
         
-        self.stereoPointsVBoxLayout.addLayout(self.NewPointHBox)
+        self.stereoPointsVBoxLayout.addLayout(self.NewPointGLay)
         
         self.disorient_btn = qt.QPushButton('Disorient ref image')
         self.disorient_btn.setToolTip("In order to use the ijk coordinates, the IJK2RAS transform will be removed from the reference image selected and a new volume will be created. This volume will be of no use in Slicer, but can be loaded in not medical imaging softwares (paraview, matlab...). This will also copy the coordsConversion table to a new name in case you want to save it.")
@@ -195,8 +217,12 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
         return [j for j in [i for i in tupleList if search in i][0] if j != search][0]
         
     def onAddBtnClicked(self):
-        xyzCoord = [self.xField.value,self.yField.value,self.zField.value]
-        
+        xyzCoord = self.calculatePositionAlongTraj( self.xField.value,
+                                                    self.yField.value,
+                                                    self.zField.value,
+                                                    self.ringField.value,
+                                                    self.arcField.value,
+                                                    self.depthField.value)
         coordTable = slicer.mrmlScene.GetNodeByID(
             self.findMatchingNodeInIdTupleList(self.fiducialNodesToCoordTables_id_tuples,
                                                self.fiducialGroup_selectionCombo.currentNode().GetID()))
@@ -212,6 +238,33 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
         self.xField.setValue(0.0)
         self.yField.setValue(0.0)
         self.zField.setValue(0.0)
+        self.ringField.setValue(0.0)
+        self.arcField.setValue(0.0)
+        self.depthField.setValue(0.0)
+        
+        
+    def calculatePositionAlongTraj(self, x,y,z,r,a,d):
+        import numpy as np
+        r =(-r)*(np.pi/180)
+        ringTrans = np.array([1,0,0, 0,np.cos(r),-np.sin(r), 0,np.sin(r),np.cos(r)]).reshape([3,3])
+        
+        a=(-a)*(np.pi/180)
+        arcTrans = np.array([ np.cos(a), -np.sin(a),0, np.sin(a),np.cos(a),0, 0,0,1]).reshape([3,3])
+
+        #trajTrans = np.dot(ringTrans, arcTrans)
+
+        # in the source refence space:
+        # x is positive from th target onwards (minus is before the target)
+        # y is positive to the left
+        # z is positive front
+        # --> for the bengun:
+        # center: [0,0,0]
+        # anterior: [0,0,2]
+        # posterior: [0,0,-2]
+        # left lateral, right medial: [0,2,0]
+        # left medial, right lateral: [0,-2,0]
+
+        return (np.array([x,y,z]) + np.dot(np.dot(ringTrans, arcTrans), np.array([d,0,0]))).tolist()
 
     def onDisorientBtnClicked(self):
         import sitkUtils as siu
@@ -273,14 +326,12 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
         fiducialNode.RemoveAllMarkups()
         
         for iRow in range(tableNode.GetNumberOfRows()):
-            fiducialNode.AddPointToNewMarkup(vtk.vtkVector3d([float(tableNode.GetCellText(iRow, tableNode.GetColumnIndex('R'))),
-                                                              float(tableNode.GetCellText(iRow, tableNode.GetColumnIndex('A'))),
-                                                              float(tableNode.GetCellText(iRow, tableNode.GetColumnIndex('S'))),
-                                                              ]),
-                                            tableNode.GetCellText(iRow, tableNode.GetColumnIndex('Marker'))
-                                            )
+            fiducialNode.AddFiducial(float(tableNode.GetCellText(iRow, tableNode.GetColumnIndex('R'))),
+                                     float(tableNode.GetCellText(iRow, tableNode.GetColumnIndex('A'))),
+                                     float(tableNode.GetCellText(iRow, tableNode.GetColumnIndex('S'))),
+                                     tableNode.GetCellText(iRow, tableNode.GetColumnIndex('Marker'))
+                                     )
             fiducialNode.SetNthMarkupLocked(fiducialNode.GetNumberOfFiducials()-1, True)
-    
             
     def XYZtoRAS(self, xyz):
         import numpy as np
