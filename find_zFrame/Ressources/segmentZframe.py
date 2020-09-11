@@ -33,11 +33,6 @@ def segment_zFrame(in_img, img_type='MR', withPlots=False):
     #then we look for minimas on the histogram
     hist_diff = np.diff(hist_y)
     
-    #b,a =butter(2, 20/(.5*int(in_img_np.max()/8)), btype='low', analog=False)
-    
-    #hist_diff = filtfilt(b, a, hist_diff)
-    
-    
     hist_diff_zc = np.where(np.diff(np.sign(hist_diff))==2)[0].flatten()
     if withPlots: print(hist_x[hist_diff_zc])
     
@@ -70,36 +65,52 @@ def segment_zFrame(in_img, img_type='MR', withPlots=False):
     middleSlice = np.array(np.floor(np.array(in_img_np.shape)/2), dtype=int)
 
     thresh_img = in_img>minThreshold_byVariation
-
+    
+    # autocrop the thresholded volume to remove any background... (matlab...) 
+    # so that we can use relative sizes in `labelToKeep_mask`
+    stats = sitk.LabelShapeStatisticsImageFilter()
+    stats.Execute(thresh_img)
+    thresh_img = sitk.Crop(thresh_img, stats.GetBoundingBox(1))
+    
     if withPlots: 
         plt.figure()
         plt.imshow(sitk.GetArrayFromImage(thresh_img)[:,:,middleSlice[2]])
-
-
-    # filter the labels by the size of their bounding boxes
+    
+    thresh_img_size = np.array(thresh_img.GetSize())*np.array(thresh_img.GetSpacing())
     spacing_mm = in_img.GetSpacing()
-
+    
     stats = sitk.LabelShapeStatisticsImageFilter()
     stats.SetComputeOrientedBoundingBox(True)
+    stats.Execute(thresh_img)
+    allObjects_bboxCenter = stats.GetCentroid(1)
+    
     connectedComponentImage = sitk.ConnectedComponent(thresh_img)
     
     stats.Execute(connectedComponentImage)
     
-    print("%d labels were found before filter (id: size):"%(len(stats.GetLabels()) ))
-    for i in stats.GetLabels():
-        print('\t%d: %s'%(i, str(np.array(stats.GetBoundingBox(i)[3:])*spacing_mm)))
-    #labelBBox_voxel = np.array([ stats.GetBoundingBox(l) for l in stats.GetLabels()])
+    labelBBox_size_mm = np.array([ stats.GetOrientedBoundingBoxSize(l) for l in stats.GetLabels()])*spacing_mm
     
-    #labelBBox_size_mm = labelBBox_voxel[:,3:]*spacing_mm
-    labelBBox_size_mm = np.array([ stats.GetOrientedBoundingBoxSize(l) for l in stats.GetLabels()])
-
-    labelToKeep_mask = np.logical_and(np.sum(labelBBox_size_mm>120, axis=1)>0,
-                                      np.sum(np.stack([labelBBox_size_mm[:,0]/labelBBox_size_mm[:,1],
-                                                       labelBBox_size_mm[:,1]/labelBBox_size_mm[:,2],
-                                                       labelBBox_size_mm[:,2]/labelBBox_size_mm[:,0]
-                                                       ], axis=1)>10, axis=1)>0)
+    labelBBox_center_mm = np.array([stats.GetCentroid(l) for l in stats.GetLabels()])*spacing_mm
+    #breakpoint()
     
-    #pdb.set_trace()
+    print("%d labels were found before filter (id: size | dist centroid):"%(stats.GetNumberOfLabels()) )
+    for i in range(stats.GetNumberOfLabels()):
+        print('\t%d: %s | %s'%(i, str(labelBBox_size_mm[i,:])
+                               , str(np.linalg.norm(labelBBox_center_mm[i,:]-allObjects_bboxCenter))))
+    #breakpoint()
+    labelToKeep_mask = np.logical_and(np.sum(labelBBox_size_mm > np.min(thresh_img_size)*0.8, axis=1 )>0
+                                      ,
+                                      np.logical_and(
+                                        np.sum(np.stack([labelBBox_size_mm[:,0]/labelBBox_size_mm[:,1],
+                                                        labelBBox_size_mm[:,1]/labelBBox_size_mm[:,2],
+                                                        labelBBox_size_mm[:,2]/labelBBox_size_mm[:,0]
+                                                        ], axis=1)>4, axis=1 )>0
+                                        ,
+                                        np.linalg.norm(labelBBox_center_mm - np.tile(allObjects_bboxCenter
+                                                                                    , [labelBBox_center_mm.shape[0], 1])
+                                                        , axis=1 ) > np.min(thresh_img_size)*0.3
+                                      ))
+   
     connected_labelMap = sitk.LabelImageToLabelMap(connectedComponentImage)
 
     label_renameMap = sitk.DoubleDoubleMap()
@@ -121,10 +132,11 @@ def segment_zFrame(in_img, img_type='MR', withPlots=False):
     out_img = sitk.ConnectedComponent(out_img)
     
     stats.Execute(out_img)
-
-    print("%d labels were found (id: size):"%(len(stats.GetLabels()) ))
+    #breakpoint()
+    print("%d labels were found (id: size | centroid):"%(len(stats.GetLabels()) ))
     for i in stats.GetLabels():
-        print('\t%d: %s'%(i, str(np.array(stats.GetBoundingBox(i)[3:])*spacing_mm)))
+        print('\t%d: %s | %s'%(i, str(np.array(stats.GetOrientedBoundingBoxSize(i))*spacing_mm)
+                               , str(np.linalg.norm(np.array(stats.GetCentroid(i))*spacing_mm-allObjects_bboxCenter))))
 
     if withPlots: plt.show()
 
