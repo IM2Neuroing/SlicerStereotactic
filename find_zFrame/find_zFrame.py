@@ -423,8 +423,19 @@ class find_zFrameLogic(ScriptedLoadableModuleLogic):
         maxVal = slicer.util.arrayFromVolume(outputVolume).max()
         effect.setParameter("MinimumThreshold",str(1.1))
         effect.setParameter("MaximumThreshold",str(maxVal))
-        zFrameSegmentationNode.CreateClosedSurfaceRepresentation()
         effect.self().onApply()
+        
+        #https://www.slicer.org/wiki/Documentation/Nightly/ScriptRepository
+        import vtkSegmentationCorePython as vtkSegmentationCore
+        segmentation = zFrameSegmentationNode.GetSegmentation()
+
+        # Turn of surface smoothing
+        segmentation.SetConversionParameter('Smoothing factor','0.0')
+
+        # Recreate representation using modified parameters (and default conversion path)
+        segmentation.CreateRepresentation(vtkSegmentationCore.vtkSegmentationConverter.GetSegmentationClosedSurfaceRepresentationName())
+        
+        
         framePoly = vtk.vtkPolyData()
         zFrameSegmentationNode.GetClosedSurfaceRepresentation(zFrameSegmentationNode.GetSegmentation().GetNthSegmentID(0), framePoly)
         outputModel.SetAndObservePolyData(framePoly)
@@ -470,10 +481,11 @@ class find_zFrameLogic(ScriptedLoadableModuleLogic):
         icp.SetSource(movingZ.GetPolyData())
         icp.SetTarget(referenceZ.GetPolyData())
         icp.GetLandmarkTransform().SetModeToRigidBody()
-        icp.SetMaximumNumberOfIterations(1000)
-        icp.SetMaximumMeanDistance(0.001)
+        #icp.SetMaximumNumberOfIterations(1000)
+        #icp.SetMaximumMeanDistance(0.001)
         #icp.SetMaximumNumberOfLandmarks(numberOfLandmarks)
         #icp.SetCheckMeanDistance(int(checkMeanDistance))
+        icp.CheckMeanDistanceOn()
         icp.SetStartByMatchingCentroids(True)
         icp.Update()
         outputMatrix = vtk.vtkMatrix4x4()
