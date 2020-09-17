@@ -91,13 +91,13 @@ def segment_zFrame(in_img, img_type='MR', withPlots=False):
     labelBBox_size_mm = np.array([ stats.GetOrientedBoundingBoxSize(l) for l in stats.GetLabels()])*spacing_mm
     
     labelBBox_center_mm = np.array([stats.GetCentroid(l) for l in stats.GetLabels()])*spacing_mm
-    #breakpoint()
     
     print("%d labels were found before filter (id: size | dist centroid):"%(stats.GetNumberOfLabels()) )
     for i in range(stats.GetNumberOfLabels()):
         print('\t%d: %s | %s'%(i, str(labelBBox_size_mm[i,:])
                                , str(np.linalg.norm(labelBBox_center_mm[i,:]-allObjects_bboxCenter))))
-    #breakpoint()
+    print("the image extend is %s"%(str(thresh_img_size)))
+    
     labelToKeep_mask = np.logical_and(np.sum(labelBBox_size_mm > np.min(thresh_img_size)*0.8, axis=1 )>0
                                       ,
                                       np.logical_and(
@@ -109,8 +109,7 @@ def segment_zFrame(in_img, img_type='MR', withPlots=False):
                                         np.linalg.norm(labelBBox_center_mm - np.tile(allObjects_bboxCenter
                                                                                     , [labelBBox_center_mm.shape[0], 1])
                                                         , axis=1 ) > np.min(thresh_img_size)*0.3
-                                      ))
-   
+                                      ))   
     connected_labelMap = sitk.LabelImageToLabelMap(connectedComponentImage)
 
     label_renameMap = sitk.DoubleDoubleMap()
@@ -118,11 +117,12 @@ def segment_zFrame(in_img, img_type='MR', withPlots=False):
         if not toKeep:
             label_renameMap[i+1]=0
     newLabelMap = sitk.ChangeLabelLabelMap(connected_labelMap, label_renameMap)
-
+    stats.Execute(sitk.LabelMapToLabel(newLabelMap))
+    print("Number of labels remaining after filtering: %d"%stats.GetNumberOfLabels())
     out_img = sitk.BinaryMorphologicalClosing(
                                         sitk.BinaryErode(
-                                            sitk.BinaryDilate(sitk.LabelMapToLabel(newLabelMap)!=0, 1)
-                                        , 1)
+                                            sitk.BinaryDilate(sitk.LabelMapToLabel(newLabelMap)!=0, (1,1,1))
+                                        , (1,1,1))
                                     , (1,1,1), sitk.sitkBall)
 
     if withPlots:
@@ -132,7 +132,6 @@ def segment_zFrame(in_img, img_type='MR', withPlots=False):
     out_img = sitk.ConnectedComponent(out_img)
     
     stats.Execute(out_img)
-    #breakpoint()
     print("%d labels were found (id: size | centroid):"%(len(stats.GetLabels()) ))
     for i in stats.GetLabels():
         print('\t%d: %s | %s'%(i, str(np.array(stats.GetOrientedBoundingBoxSize(i))*spacing_mm)
