@@ -98,7 +98,7 @@ def segment_zFrame(in_img, img_type='MR', withPlots=False):
                                , str(np.linalg.norm(labelBBox_center_mm[i,:]-allObjects_bboxCenter))))
     print("the image extend is %s"%(str(thresh_img_size)))
     
-    labelToKeep_mask = np.logical_and(np.sum(labelBBox_size_mm > np.min(thresh_img_size)*0.8, axis=1 )>0
+    labelToKeep_mask = np.logical_and(np.sum(labelBBox_size_mm > thresh_img_size*0.9, axis=1 )>0
                                       ,
                                       np.logical_and(
                                         np.sum(np.stack([labelBBox_size_mm[:,0]/labelBBox_size_mm[:,1],
