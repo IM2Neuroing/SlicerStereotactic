@@ -15,8 +15,8 @@ class probeView(ScriptedLoadableModule):
 
   def __init__(self, parent):
     ScriptedLoadableModule.__init__(self, parent)
-    self.parent.title = "probeView" # TODO make this more human readable by adding spaces
-    self.parent.categories = ["Utilities"]
+    self.parent.title = "Probe View" # TODO make this more human readable by adding spaces
+    self.parent.categories = ["Navigation"]
     self.parent.dependencies = []
     self.parent.contributors = ["Dorian VOGEL (FHNW, LiU)"] # replace with "Firstname Lastname (Organization)"
     self.parent.helpText = """
@@ -24,9 +24,8 @@ This is an example of scripted loadable module bundled in an extension.
 It performs a simple thresholding on the input volume and optionally captures a screenshot.
 """
     self.parent.helpText += self.getDefaultModuleDocumentationLink()
-    self.parent.acknowledgementText = """
-This file was originally developed by Jean-Christophe Fillion-Robin, Kitware Inc.
-and Steve Pieper, Isomics, Inc. and was partially funded by NIH grant 3P41RR013218-12S1.
+    self.parent.acknowledgementText = u"""
+This file was originally developed by Dorian Vogel, (Fachhochschule Nordwestschweitz, Muttenz, Switzerland; Linköping University, Linköping, Sweden). Financial support: FHNW, SSF, VR.
 """ # replace with organization, grant and thanks.
 
 #
