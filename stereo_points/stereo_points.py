@@ -68,7 +68,7 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
         
         
         self.fiducialGroup_selectionCombo = slicer.qMRMLNodeComboBox()
-        self.fiducialGroup_selectionCombo.nodeTypes = ['vtkMRMLMarkupsFiducialNode']    
+        self.fiducialGroup_selectionCombo.nodeTypes = ['vtkMRMLMarkupsLineNode']    
         self.fiducialGroup_selectionCombo.selectNodeUponCreation = True
         self.fiducialGroup_selectionCombo.renameEnabled=True
         self.fiducialGroup_selectionCombo.noneEnabled = False
@@ -76,8 +76,8 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
         self.fiducialGroup_selectionCombo.showChildNodeTypes = False
         self.fiducialGroup_selectionCombo.setMRMLScene( slicer.mrmlScene )
         self.fiducialGroup_selectionCombo.baseName = 'Stereotactic_points'
-        self.fiducialGroup_selectionCombo.setToolTip( "Select fiducial node for coordinates conversion" )
-        self.stereoPointsFormLayout.addRow('Fiducial group', self.fiducialGroup_selectionCombo)
+        self.fiducialGroup_selectionCombo.setToolTip( "Select line node for coordinates conversion" )
+        self.stereoPointsFormLayout.addRow('Trajectory', self.fiducialGroup_selectionCombo)
         
         self.stereoPointsVBoxLayout.addLayout(self.stereoPointsFormLayout)
         self.stereoPointsVBoxLayout.addWidget(self.pointTableView)
@@ -142,7 +142,7 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
         
         self.referenceImage_selectionCombo.connect('currentNodeChanged(vtkMRMLNode*)', self.onReferenceImageSelectedChanged)
         self.frameTransform_selectionCombo.connect('currentNodeChanged(vtkMRMLNode*)', self.onFrameTransformSelectedChanged)
-        self.fiducialGroup_selectionCombo.connect('currentNodeChanged(vtkMRMLNode*)', self.onFiducialSelectedChanged)
+        self.fiducialGroup_selectionCombo.connect('currentNodeChanged(vtkMRMLNode*)', self.onControlPointSelectedChanged)
         self.disorient_btn.connect('clicked(bool)', self.onDisorientBtnClicked)
         
         self.addBtn.connect('clicked(bool)', self.onAddBtnClicked)
@@ -168,9 +168,9 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
                                                self.fiducialGroup_selectionCombo.currentNode().GetID()))
         self.updatePointsCoordsFromXYZ(coordTable, self.referenceImage_selectionCombo.currentNode(), newNode)
         
-    def onFiducialSelectedChanged(self, newNode):
+    def onControlPointSelectedChanged(self, newNode):
         #print('selection changed !')
-        if(type(newNode) == type(slicer.vtkMRMLMarkupsFiducialNode())):
+        if(type(newNode) == type(slicer.vtkMRMLMarkupsLineNode())):
             coordTableName = newNode.GetName() + "_coordsConversion"
         else:
             return
@@ -190,7 +190,7 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
             self.fiducialNodesToCoordTables_id_tuples.append((newNode.GetID(), coordTable.GetID()))
             # add an observer for both nodes, whenever one is renamed, the other one is renamed as well
             coordTable.AddObserver(vtk.vtkCommand.ModifiedEvent, self.onCoordTableModified)
-            newNode.AddObserver(vtk.vtkCommand.ModifiedEvent, self.onFiducialNodeModified)
+            newNode.AddObserver(vtk.vtkCommand.ModifiedEvent, self.onControlPointNodeModified)
         else:
             #print('found it !')
             coordTable = slicer.mrmlScene.GetNodesByName(coordTableName).GetItemAsObject(0)
@@ -202,11 +202,11 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
         self.pointTableView.show()
     
     def onCoordTableModified(self, updatedNode,eventType):
-        matchingFiducial_nodeID = self.findMatchingNodeInIdTupleList(self.fiducialNodesToCoordTables_id_tuples, updatedNode.GetID())
-        fiducialNode = slicer.mrmlScene.GetNodeByID(matchingFiducial_nodeID)
+        matchingControlPoint_nodeID = self.findMatchingNodeInIdTupleList(self.fiducialNodesToCoordTables_id_tuples, updatedNode.GetID())
+        fiducialNode = slicer.mrmlScene.GetNodeByID(matchingControlPoint_nodeID)
         fiducialNode.SetName(updatedNode.GetName().replace('_coordsConversion', ''))
     
-    def onFiducialNodeModified(self, updatedNode, eventType):
+    def onControlPointNodeModified(self, updatedNode, eventType):
         matchingCoordTable_nodeID = self.findMatchingNodeInIdTupleList(self.fiducialNodesToCoordTables_id_tuples, updatedNode.GetID())
         coordTable = slicer.mrmlScene.GetNodeByID(matchingCoordTable_nodeID)
         coordTable.SetName(updatedNode.GetName()+'_coordsConversion')
@@ -229,7 +229,7 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
                         self.ringField.value , self.arcField.value   , self.depthField.value ,
                         self.nameField.text
                         )
-        self.table2Fiducial(coordTable, self.fiducialGroup_selectionCombo.currentNode())
+        self.table2ControlPoint(coordTable, self.fiducialGroup_selectionCombo.currentNode())
 
         self.nameField.setText('')
         self.xField.setValue(0.0)
@@ -365,10 +365,10 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
     def fiducial2Table(self, tableNode, fiducialNode):
         for iRow in range(tableNode.GetNumberOfRows()):
             tableNode.RemoveRow(0) #always remove the first
-        for iFiducial in range(fiducialNode.GetNumberOfFiducials()):
+        for iControlPoint in range(fiducialNode.GetNumberOfControlPoints()):
             thisPosRAS = [0,0,0]
-            fiducialNode.GetNthFiducialPosition(iFiducial, thisPosRAS)
-            thisLabel = fiducialNode.GetNthFiducialLabel(iFiducial)
+            fiducialNode.GetNthControlPointPosition(iControlPoint, thisPosRAS)
+            thisLabel = fiducialNode.GetNthControlPointLabel(iControlPoint)
             
             r = tableNode.AddEmptyRow()
             tableNode.SetCellText(r, tableNode.GetColumnIndex('Marker'), thisLabel)
@@ -376,16 +376,16 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
             tableNode.SetCellText(r, tableNode.GetColumnIndex('A'), '%.02f'%thisPosRAS[1])
             tableNode.SetCellText(r, tableNode.GetColumnIndex('S'), '%.02f'%thisPosRAS[2])
     
-    def table2Fiducial(self, tableNode, fiducialNode):
+    def table2ControlPoint(self, tableNode, fiducialNode):
         fiducialNode.RemoveAllMarkups()
         
         for iRow in range(tableNode.GetNumberOfRows()):
-            fiducialNode.AddFiducial(float(tableNode.GetCellText(iRow, tableNode.GetColumnIndex('R'))),
-                                     float(tableNode.GetCellText(iRow, tableNode.GetColumnIndex('A'))),
-                                     float(tableNode.GetCellText(iRow, tableNode.GetColumnIndex('S'))),
-                                     tableNode.GetCellText(iRow, tableNode.GetColumnIndex('Marker'))
+            fiducialNode.AddControlPoint(vtk.vtkVector3d([ float(tableNode.GetCellText(iRow, tableNode.GetColumnIndex('R')))
+                                                          ,float(tableNode.GetCellText(iRow, tableNode.GetColumnIndex('A')))
+                                                          , float(tableNode.GetCellText(iRow, tableNode.GetColumnIndex('S')))
+                                                          ]), tableNode.GetCellText(iRow, tableNode.GetColumnIndex('Marker'))
                                      )
-            fiducialNode.SetNthMarkupLocked(fiducialNode.GetNumberOfFiducials()-1, True)
+            fiducialNode.SetNthMarkupLocked(fiducialNode.GetNumberOfControlPoints()-1, True)
             
     def XYZtoRAS(self, xyz):
         import numpy as np
