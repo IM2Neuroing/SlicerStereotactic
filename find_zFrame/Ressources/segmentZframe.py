@@ -38,13 +38,13 @@ def segment_zFrame(in_img, img_type='MR', withPlots=False):
     
     if img_type == 'MR':
         minThreshold_byVariation = hist_x[hist_diff_zc[hist_x[hist_diff_zc]>minThreshold_byCount][1]] #use the second minima after background (seems to work ok on t1)
-        print("first maxima after background found: %d"%minThreshold_byVariation)
+        print("first maxima after background found: %f"%minThreshold_byVariation)
     elif img_type == 'CT':
         secondSpikeVal_intens = hist_x[np.where(hist_y == hist_y[hist_x>minThreshold_byCount].max())]
         #minThreshold_byVariation = hist_x[hist_diff_zc[hist_x[hist_diff_zc]>secondSpikeVal_intens]][0]
         minThreshold_byVariation_id = hist_diff_zc[hist_x[hist_diff_zc] > (minThreshold_byCount+100)][0]
         minThreshold_byVariation= hist_x[minThreshold_byVariation_id]
-        print("first maxima after soft tissue found: %d"%minThreshold_byVariation)
+        print("first maxima after soft tissue found: %f"%minThreshold_byVariation)
     else:
         print('wrong image type passed !')
         return 0
@@ -76,40 +76,48 @@ def segment_zFrame(in_img, img_type='MR', withPlots=False):
         plt.figure()
         plt.imshow(sitk.GetArrayFromImage(thresh_img)[:,:,middleSlice[2]])
     
-    thresh_img_size = np.array(thresh_img.GetSize())*np.array(thresh_img.GetSpacing())
     spacing_mm = in_img.GetSpacing()
     
     stats = sitk.LabelShapeStatisticsImageFilter()
     stats.SetComputeOrientedBoundingBox(True)
     stats.Execute(thresh_img)
-    allObjects_bboxCenter = stats.GetCentroid(1)
-    
+    allObjects_bboxCenter = np.array(stats.GetCentroid(1))
+    allObjects_bboxSize = np.array(stats.GetOrientedBoundingBoxSize(1))*spacing_mm
     connectedComponentImage = sitk.ConnectedComponent(thresh_img)
     
     stats.Execute(connectedComponentImage)
     
     labelBBox_size_mm = np.array([ stats.GetOrientedBoundingBoxSize(l) for l in stats.GetLabels()])*spacing_mm
-    
-    labelBBox_center_mm = np.array([stats.GetCentroid(l) for l in stats.GetLabels()])*spacing_mm
-    
+
+    labelBBox_center_mm= np.array([  np.array(stats.GetOrientedBoundingBoxOrigin(l)) + \
+                np.dot(  np.reshape(stats.GetOrientedBoundingBoxDirection(l), [3,3])
+                              , (np.array(stats.GetOrientedBoundingBoxSize(l))*spacing_mm)/2  )
+            for l in stats.GetLabels()])
+
+    labelBBoxCentroidDistFromCenter = np.linalg.norm(labelBBox_center_mm - np.tile(  allObjects_bboxCenter, [labelBBox_center_mm.shape[0], 1])
+                                       , axis=1 )
     print("%d labels were found before filter (id: size | dist centroid):"%(stats.GetNumberOfLabels()) )
     for i in range(stats.GetNumberOfLabels()):
         print('\t%d: %s | %s'%(i, str(labelBBox_size_mm[i,:])
-                               , str(np.linalg.norm(labelBBox_center_mm[i,:]-allObjects_bboxCenter))))
-    print("the image extend is %s"%(str(thresh_img_size)))
+                               , str(labelBBoxCentroidDistFromCenter[i])))
+        
+    print("allObjects_bboxSize %s"%(str(allObjects_bboxSize)))
     
-    labelToKeep_mask = np.logical_and(np.sum(labelBBox_size_mm > thresh_img_size*0.9, axis=1 )>0
-                                      ,
-                                      np.logical_and(
-                                        np.sum(np.stack([labelBBox_size_mm[:,0]/labelBBox_size_mm[:,1],
-                                                        labelBBox_size_mm[:,1]/labelBBox_size_mm[:,2],
-                                                        labelBBox_size_mm[:,2]/labelBBox_size_mm[:,0]
-                                                        ], axis=1)>4, axis=1 )>0
-                                        ,
-                                        np.linalg.norm(labelBBox_center_mm - np.tile(allObjects_bboxCenter
-                                                                                    , [labelBBox_center_mm.shape[0], 1])
-                                                        , axis=1 ) > np.min(thresh_img_size)*0.3
-                                      ))   
+    objectMajorAxisSize_mask = np.sum(labelBBox_size_mm > allObjects_bboxSize*0.5, axis=1 )>0
+    
+    compacityRatio_mask = np.sum(np.stack([labelBBox_size_mm[:,0]/labelBBox_size_mm[:,1],
+                                           labelBBox_size_mm[:,1]/labelBBox_size_mm[:,2],
+                                           labelBBox_size_mm[:,2]/labelBBox_size_mm[:,0]
+                                           ], axis=1)>4, axis=1 )>0
+    
+    centroidDist_mask =  labelBBoxCentroidDistFromCenter > np.min(allObjects_bboxSize)*0.3
+    
+    print("%d objects left after objectMajorAxisSize_mask"%(np.sum(objectMajorAxisSize_mask==1)))
+    print("%d objects left after compacityRatio_mask"%(np.sum(compacityRatio_mask*objectMajorAxisSize_mask==1)))
+    print("%d objects left after centroidDist_mask"%(np.sum(centroidDist_mask*compacityRatio_mask*objectMajorAxisSize_mask==1)))
+    
+    labelToKeep_mask = objectMajorAxisSize_mask * compacityRatio_mask * centroidDist_mask
+    
     connected_labelMap = sitk.LabelImageToLabelMap(connectedComponentImage)
 
     label_renameMap = sitk.DoubleDoubleMap()
