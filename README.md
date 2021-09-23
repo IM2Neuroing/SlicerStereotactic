@@ -1,8 +1,7 @@
 # Decription
 
-# Installation
-
-# Tutorial
+# Installation - Tutorial
+A small [video tutorial](https://tube.switch.ch/videos/ZSYNlDwMgu) details the installation and use of StereoSlicer with an example case.
 
 # Ideas for next features:
 
