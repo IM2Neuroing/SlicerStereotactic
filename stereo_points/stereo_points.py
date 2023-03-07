@@ -40,12 +40,12 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
         stereoPointsAdd_collbtn = ctk.ctkCollapsibleButton()
         stereoPointsAdd_collbtn.text = 'Enter stereotactic points'
         self.layout.addWidget(stereoPointsAdd_collbtn)
-        
-        
+
+
         self.stereoPointsVBoxLayout = qt.QVBoxLayout(stereoPointsAdd_collbtn)
         self.stereoPointsFormLayout = qt.QFormLayout()
         self.pointTableView = slicer.qMRMLTableView()                
-        
+
         self.referenceImage_selectionCombo = slicer.qMRMLNodeComboBox()
         self.referenceImage_selectionCombo.nodeTypes = ['vtkMRMLScalarVolumeNode']    
         self.referenceImage_selectionCombo.selectNodeUponCreation = True
@@ -55,7 +55,7 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
         self.referenceImage_selectionCombo.setMRMLScene( slicer.mrmlScene )
         self.referenceImage_selectionCombo.setToolTip( "Select the image to transform the fiducials to:" )
         self.stereoPointsFormLayout.addRow('Reference image', self.referenceImage_selectionCombo)
-        
+
         self.frameTransform_selectionCombo = slicer.qMRMLNodeComboBox()
         self.frameTransform_selectionCombo.nodeTypes = ['vtkMRMLTransformNode']    
         self.frameTransform_selectionCombo.selectNodeUponCreation = True
@@ -65,8 +65,8 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
         self.frameTransform_selectionCombo.setMRMLScene( slicer.mrmlScene )
         self.frameTransform_selectionCombo.setToolTip( "Transformation obtained during the ICP frame registration" )
         self.stereoPointsFormLayout.addRow('Frame to image transform', self.frameTransform_selectionCombo)
-        
-        
+
+
         self.fiducialGroup_selectionCombo = slicer.qMRMLNodeComboBox()
         self.fiducialGroup_selectionCombo.nodeTypes = ['vtkMRMLMarkupsLineNode']    
         self.fiducialGroup_selectionCombo.selectNodeUponCreation = True
@@ -78,77 +78,77 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
         self.fiducialGroup_selectionCombo.baseName = 'Stereotactic_points'
         self.fiducialGroup_selectionCombo.setToolTip( "Select line node for coordinates conversion" )
         self.stereoPointsFormLayout.addRow('Trajectory', self.fiducialGroup_selectionCombo)
-        
+
         self.stereoPointsVBoxLayout.addLayout(self.stereoPointsFormLayout)
         self.stereoPointsVBoxLayout.addWidget(self.pointTableView)
-        
+
         self.NewPointGLay = qt.QGridLayout()
-        
+
         self.nameField= qt.QLineEdit()
         self.nameField.setPlaceholderText('Add new point')
         self.NewPointGLay.addWidget(self.nameField, 0,0,2,1)
-        
+
         self.xLabel = qt.QLabel('X')
         self.xLabel.setAlignment(qt.Qt.AlignRight | qt.Qt.AlignVCenter)
         self.xField = qt.QDoubleSpinBox()
         self.xField.setRange(0.0, 999.99)
         self.NewPointGLay.addWidget(self.xLabel, 0,1)
         self.NewPointGLay.addWidget(self.xField, 0,2)
-        
+
         self.yLabel = qt.QLabel('Y')
         self.yLabel.setAlignment(qt.Qt.AlignRight | qt.Qt.AlignVCenter)
         self.yField = qt.QDoubleSpinBox()
         self.yField.setRange(0.0, 999.99)
         self.NewPointGLay.addWidget(self.yLabel, 0,3)
         self.NewPointGLay.addWidget(self.yField, 0,4)
-        
+
         self.zLabel = qt.QLabel('Z')
         self.zLabel.setAlignment(qt.Qt.AlignRight | qt.Qt.AlignVCenter)
         self.zField = qt.QDoubleSpinBox()
         self.zField.setRange(0.0, 999.99)
         self.NewPointGLay.addWidget(self.zLabel,0,5)
         self.NewPointGLay.addWidget(self.zField,0,6)
-        
+
         self.ringLabel = qt.QLabel('Ring')
         self.ringLabel.setAlignment(qt.Qt.AlignRight | qt.Qt.AlignVCenter)
         self.ringField = qt.QDoubleSpinBox()
         self.ringField.setRange(0.0, 180.00)
         self.NewPointGLay.addWidget(self.ringLabel, 1,1)
         self.NewPointGLay.addWidget(self.ringField, 1,2)
-        
+
         self.arcLabel = qt.QLabel('Arc')
         self.arcLabel.setAlignment(qt.Qt.AlignRight | qt.Qt.AlignVCenter)
         self.arcField = qt.QDoubleSpinBox()
         self.arcField.setRange(0.0, 180.00)
         self.NewPointGLay.addWidget(self.arcLabel, 1,3)
         self.NewPointGLay.addWidget(self.arcField, 1,4)
-        
+
         self.depthLabel = qt.QLabel('Depth')
         self.depthLabel.setAlignment(qt.Qt.AlignRight | qt.Qt.AlignVCenter)
         self.depthField = qt.QDoubleSpinBox()
         self.depthField.setRange(-999.99, 999.99)
         self.NewPointGLay.addWidget(self.depthLabel,1,5)
         self.NewPointGLay.addWidget(self.depthField,1,6)
-        
-        
+
+
         self.addBtn = qt.QPushButton('+')
         self.NewPointGLay.addWidget(self.addBtn, 0,7,2,1)
-        
+
         self.stereoPointsVBoxLayout.addLayout(self.NewPointGLay)
-        
+
         self.disorient_btn = qt.QPushButton('Disorient ref image')
         self.disorient_btn.setToolTip("In order to use the ijk coordinates, the IJK2RAS transform will be removed from the reference image selected and a new volume will be created. This volume will be of no use in Slicer, but can be loaded in not medical imaging softwares (paraview, matlab...). This will also copy the coordsConversion table to a new name in case you want to save it.")
         self.stereoPointsVBoxLayout.addWidget(self.disorient_btn)
-        
+
         self.referenceImage_selectionCombo.connect('currentNodeChanged(vtkMRMLNode*)', self.onReferenceImageSelectedChanged)
         self.frameTransform_selectionCombo.connect('currentNodeChanged(vtkMRMLNode*)', self.onFrameTransformSelectedChanged)
         self.fiducialGroup_selectionCombo.connect('currentNodeChanged(vtkMRMLNode*)', self.onControlPointSelectedChanged)
         self.disorient_btn.connect('clicked(bool)', self.onDisorientBtnClicked)
-        
+
         self.addBtn.connect('clicked(bool)', self.onAddBtnClicked)
 
         self.fiducialNodesToCoordTables_id_tuples = list()
-    
+
     ###################################################################################################
     # connections
 
@@ -160,14 +160,14 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
                                                self.fiducialGroup_selectionCombo.currentNode().GetID()))
         self.updatePointsCoordsFromXYZ(coordTable, newNode, self.frameTransform_selectionCombo.currentNode())
         self.disorient_btn.setText('Disorient "'+newNode.GetName()+'"')
-        
+
     def onFrameTransformSelectedChanged(self, newNode):
         #coordTable = slicer.mrmlScene.GetNodesByName(self.fiducialGroup_selectionCombo.currentNode().GetName() + "_coordsConversion").GetItemAsObject(0)
         coordTable = slicer.mrmlScene.GetNodeByID(
             self.findMatchingNodeInIdTupleList(self.fiducialNodesToCoordTables_id_tuples,
                                                self.fiducialGroup_selectionCombo.currentNode().GetID()))
         self.updatePointsCoordsFromXYZ(coordTable, self.referenceImage_selectionCombo.currentNode(), newNode)
-        
+
     def onControlPointSelectedChanged(self, newNode):
         #print('selection changed !')
         if(type(newNode) == type(slicer.vtkMRMLMarkupsLineNode())):
@@ -175,7 +175,7 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
         else:
             return
         #print('looking for '+coordTableName)
-        
+
         if slicer.mrmlScene.GetNodesByName(coordTableName).GetNumberOfItems() == 0:
             #print('create new table')
             coordTable = slicer.vtkMRMLTableNode()
@@ -184,7 +184,7 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
             for col in ['Marker', 'x', 'y', 'z', 'r', 'a', 'd', 'X', 'Y', 'Z', 'R', 'A', 'S', 'i', 'j', 'k']:
                 c = coordTable.AddColumn()
                 c.SetName(col)
-            
+
             slicer.mrmlScene.AddNode(coordTable)
             # keep a map of the fiducialNode <-> TableNode couples
             self.fiducialNodesToCoordTables_id_tuples.append((newNode.GetID(), coordTable.GetID()))
@@ -194,28 +194,28 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
         else:
             #print('found it !')
             coordTable = slicer.mrmlScene.GetNodesByName(coordTableName).GetItemAsObject(0)
-        
+
         #first populate the table with the markers in the fiducialNode
         #self.fiducial2Table(coordTable, newNode)
         self.pointTableView.setMRMLTableNode(coordTable)
         self.pointTableView.setFirstRowLocked(True)
         self.pointTableView.show()
-    
+
     def onCoordTableModified(self, updatedNode,eventType):
         matchingControlPoint_nodeID = self.findMatchingNodeInIdTupleList(self.fiducialNodesToCoordTables_id_tuples, updatedNode.GetID())
         fiducialNode = slicer.mrmlScene.GetNodeByID(matchingControlPoint_nodeID)
         fiducialNode.SetName(updatedNode.GetName().replace('_coordsConversion', ''))
-    
+
     def onControlPointNodeModified(self, updatedNode, eventType):
         matchingCoordTable_nodeID = self.findMatchingNodeInIdTupleList(self.fiducialNodesToCoordTables_id_tuples, updatedNode.GetID())
         coordTable = slicer.mrmlScene.GetNodeByID(matchingCoordTable_nodeID)
         coordTable.SetName(updatedNode.GetName()+'_coordsConversion')
-    
-        
+
+
     def findMatchingNodeInIdTupleList(self, tupleList, search):
         #print('looking for '+str(search)+ ' in '+str(tupleList))
         return [j for j in [i for i in tupleList if search in i][0] if j != search][0]
-        
+
     def onAddBtnClicked(self):
 
         coordTable = slicer.mrmlScene.GetNodeByID(
@@ -238,58 +238,60 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
         self.ringField.setValue(0.0)
         self.arcField.setValue(0.0)
         self.depthField.setValue(0.0)
-        print('=================================================================================')
-        
+        print('==============================================================')
+
     def GetXYZcoordFromStereoSetings(self, x, y, z, r, a, d):
         import numpy as np
-        #print('[GetXYZcoordFromStereoSetings] x: %f | y: %f | z: %f | r: %f | a: %f'%(x,y,z,r,a))
-        trajTransform = self.GetTrajectoryTransform(x,y,z,r,a)
-        #print("trajTrans: %s"%str(trajTransform))
-        coord = np.dot(self.GetTrajectoryTransform(x,y,z,r,a), np.array([d,0,0,1]))
-        #print("result: %s"%str(coord))
+        # print('[GetXYZcoordFromStereoSetings] x: %f | y: %f | z: %f | r: %f | a: %f'%(x,y,z,r,a))
+        coord = np.dot(self.GetTrajectoryTransform(x, y, z, r, a)
+                       , np.array([d, 0, 0, 1]))
+        # print("result: %s"%str(coord))
         return coord.tolist()
-    
+
     def GetTrajectoryTransform(self, x,y,z,r,a):
         import numpy as np
-        #print('[GetTrajectoryTransform] x: %f | y: %f | z: %f | r: %f | a: %f'%(x,y,z,r,a))
-        r =(-r)*(np.pi/180)
+        # print('[GetTrajectoryTransform] x: %f | y: %f | z: %f | r: %f | a: %f'%(x,y,z,r,a))
+        # r =(-r)*(np.pi/180)
         ringTrans = np.array([[1, 0         , 0         , 0],
                               [0, np.cos(r) , -np.sin(r), 0],
                               [0, np.sin(r) , np.cos(r) , 0],
                               [0, 0         , 0         , 1]
                               ])
-        
+
         a=(-a)*(np.pi/180)
         arcTrans = np.array([[np.cos(a) , -np.sin(a)    , 0, 0],
                              [np.sin(a) , np.cos(a)     , 0, 0],
                              [0         , 0             , 1, 0],
                              [0         , 0             , 0, 1]
                              ])
-        
+
         carthesianTrans = np.array([[1, 0, 0, x],
                                     [0, 1, 0, y],
                                     [0, 0, 1, z],
                                     [0, 0, 0, 1]
                                     ])
-        
-        #print('ring: %s'%str(ringTrans))
-        #print('arc: %s'%str(arcTrans))
-        #print('transl: %s'%str(carthesianTrans))
-        
-        #trajTrans = np.dot(ringTrans, arcTrans)
 
-        # in the source refence space:
+        # print('ring: %s'%str(ringTrans))
+        # print('arc: %s'%str(arcTrans))
+        # print('transl: %s'%str(carthesianTrans))
+
+        # trajTrans = np.dot(ringTrans, arcTrans)
+
+        # in the source reference space:
         # x is positive from th target onwards (minus is before the target)
         # y is positive to the left
         # z is positive front
         # --> for the Bengun:
-        # center: [0,0,0]
-        # anterior: [0,0,2]
-        # posterior: [0,0,-2]
-        # left lateral, right medial: [0,2,0]
-        # left medial, right lateral: [0,-2,0]
+        # center:                       [0,0,0]
+        # anterior:                     [0,0,2]
+        # posterior:                    [0,0,-2]
+        # left lateral, right medial:   [0,2,0]
+        # left medial, right lateral:   [0,-2,0]
+        trajTrans = np.dot(carthesianTrans, np.dot(ringTrans, arcTrans))
+        print("=============== trajectory transform ===============")
+        print(trajTrans)
 
-        return np.dot(carthesianTrans, np.dot(ringTrans, arcTrans))
+        return trajTrans
 
     def onDisorientBtnClicked(self):
         import sitkUtils as siu
@@ -298,70 +300,75 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
         refImg_itk.SetDirection(np.identity(3).reshape(1,9).tolist()[0])
         refImg_itk.SetOrigin([0,0,0])
         siu.PushVolumeToSlicer(refImg_itk, name=self.referenceImage_selectionCombo.currentNode().GetName()+'_noOrient')
-        
+
         coordTable = slicer.mrmlScene.GetNodeByID(
             self.findMatchingNodeInIdTupleList(self.fiducialNodesToCoordTables_id_tuples,
                                                self.fiducialGroup_selectionCombo.currentNode().GetID()))
-        
-        #clone the table node
+
+        # clone the table node
         newTable = slicer.vtkMRMLTableNode()
         newTable.Copy(coordTable)
         newTable.SetName(coordTable.GetName()+'_stereopoints_'+self.referenceImage_selectionCombo.currentNode().GetName())
-        
+
         for col in ['Leksell2IJK', 'Leksell2RAS']:
             c = newTable.AddColumn()
             c.SetName(col)
-        
+
         for iRow in range(newTable.GetNumberOfRows()):
             x = float(newTable.GetCellText(iRow, newTable.GetColumnIndex('x')))
             y = float(newTable.GetCellText(iRow, newTable.GetColumnIndex('y')))
             z = float(newTable.GetCellText(iRow, newTable.GetColumnIndex('z')))
             r = float(newTable.GetCellText(iRow, newTable.GetColumnIndex('r')))
             a = float(newTable.GetCellText(iRow, newTable.GetColumnIndex('a')))
-            d = float(newTable.GetCellText(iRow, newTable.GetColumnIndex('d')))
-            
+
             newTable.SetCellText(iRow, newTable.GetColumnIndex('Leksell2IJK'), str(self.GetLeksell2IJKtrans(x,y,z,r,a)))
             newTable.SetCellText(iRow, newTable.GetColumnIndex('Leksell2RAS'), str(self.GetLeksell2RAStrans(x,y,z,r,a)))
-        
-        slicer.mrmlScene.AddNode(newTable)
 
+        slicer.mrmlScene.AddNode(newTable)
 
     def addPointFromStereoSetting(self, tableNode, x, y, z, r, a, d, label):
         row = tableNode.AddEmptyRow()
-        #print('[addPointFromStereoSetting] x: %f | y: %f | z: %f | r: %f | a: %f'%(x,y,z,r,a))
+        # print('[addPointFromStereoSetting] x: %f | y: %f | z: %f | r: %f | a: %f'%(x,y,z,r,a))
         xyz = self.GetXYZcoordFromStereoSetings(x,y,z,r,a, d)
-        
+
+        trajTransform = slicer.vtkMRMLTransformNode()
+        trajTransform.SetName(label)
+        trajTransform.SetAndObserveMatrixTransformToParent(slicer.util.vtkMatrixFromArray(self.GetTrajectoryTransform(x, y, z, r, a)))
+        slicer.mrmlScene.AddNode(trajTransform)
+
         tableNode.SetCellText(row, tableNode.GetColumnIndex('Marker'), label)
-        
+
         tableNode.SetCellText(row, tableNode.GetColumnIndex('x'), '%.02f'%x)
         tableNode.SetCellText(row, tableNode.GetColumnIndex('y'), '%.02f'%y)
         tableNode.SetCellText(row, tableNode.GetColumnIndex('z'), '%.02f'%z)
         tableNode.SetCellText(row, tableNode.GetColumnIndex('r'), '%.02f'%r)
         tableNode.SetCellText(row, tableNode.GetColumnIndex('a'), '%.02f'%a)
         tableNode.SetCellText(row, tableNode.GetColumnIndex('d'), '%.02f'%d)
-        
+
         tableNode.SetCellText(row, tableNode.GetColumnIndex('X'), '%.02f'%xyz[0])
         tableNode.SetCellText(row, tableNode.GetColumnIndex('Y'), '%.02f'%xyz[1])
         tableNode.SetCellText(row, tableNode.GetColumnIndex('Z'), '%.02f'%xyz[2])
-        self.updatePointsCoordsFromXYZ(tableNode, self.referenceImage_selectionCombo.currentNode(), self.frameTransform_selectionCombo.currentNode())
-        
+        self.updatePointsCoordsFromXYZ(tableNode,
+                                       self.referenceImage_selectionCombo.currentNode(),
+                                       self.frameTransform_selectionCombo.currentNode())
+
     def updatePointsCoordsFromXYZ(self, tableNode, refImage, frameTransform):
         for iRow in range(tableNode.GetNumberOfRows()):
             xyz = [float(tableNode.GetCellText(iRow, tableNode.GetColumnIndex('X'))),
                    float(tableNode.GetCellText(iRow, tableNode.GetColumnIndex('Y'))),
                    float(tableNode.GetCellText(iRow, tableNode.GetColumnIndex('Z')))
                    ]
-            
-            [R,A,S] = self.XYZtoRAS(xyz)
-            [i,j,k] = self.RASpatToIJK(self.RAStoRASpat(self.XYZtoRAS(xyz)))
-            
+
+            [R, A, S] = self.XYZtoRAS(xyz)
+            [i, j, k] = self.RASpatToIJK(self.RAStoRASpat(self.XYZtoRAS(xyz)))
+
             tableNode.SetCellText(iRow, tableNode.GetColumnIndex('R'), '%.02f'%R)
             tableNode.SetCellText(iRow, tableNode.GetColumnIndex('A'), '%.02f'%A)
             tableNode.SetCellText(iRow, tableNode.GetColumnIndex('S'), '%.02f'%S)
             tableNode.SetCellText(iRow, tableNode.GetColumnIndex('i'), '%.02f'%i)
             tableNode.SetCellText(iRow, tableNode.GetColumnIndex('j'), '%.02f'%j)
             tableNode.SetCellText(iRow, tableNode.GetColumnIndex('k'), '%.02f'%k)
-            
+
     def fiducial2Table(self, tableNode, fiducialNode):
         for iRow in range(tableNode.GetNumberOfRows()):
             tableNode.RemoveRow(0) #always remove the first
@@ -369,16 +376,16 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
             thisPosRAS = [0,0,0]
             fiducialNode.GetNthControlPointPosition(iControlPoint, thisPosRAS)
             thisLabel = fiducialNode.GetNthControlPointLabel(iControlPoint)
-            
+
             r = tableNode.AddEmptyRow()
             tableNode.SetCellText(r, tableNode.GetColumnIndex('Marker'), thisLabel)
             tableNode.SetCellText(r, tableNode.GetColumnIndex('R'), '%.02f'%thisPosRAS[0])
             tableNode.SetCellText(r, tableNode.GetColumnIndex('A'), '%.02f'%thisPosRAS[1])
             tableNode.SetCellText(r, tableNode.GetColumnIndex('S'), '%.02f'%thisPosRAS[2])
-    
+
     def table2ControlPoint(self, tableNode, fiducialNode):
         fiducialNode.RemoveAllMarkups()
-        
+
         for iRow in range(tableNode.GetNumberOfRows()):
             fiducialNode.AddControlPoint(vtk.vtkVector3d([ float(tableNode.GetCellText(iRow, tableNode.GetColumnIndex('R')))
                                                           ,float(tableNode.GetCellText(iRow, tableNode.GetColumnIndex('A')))
@@ -386,21 +393,21 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
                                                           ]), tableNode.GetCellText(iRow, tableNode.GetColumnIndex('Marker'))
                                      )
             fiducialNode.SetNthMarkupLocked(fiducialNode.GetNumberOfControlPoints()-1, True)
-            
+
     def XYZtoRAS(self, xyz):
         import numpy as np
         return np.dot(self.GetXYZtoRASTrans(), np.array(xyz+[1])).tolist()[:3]
-    
+
     def GetXYZtoRASTrans(self):
         if slicer.mrmlScene.GetNodesByName('leksell2RAS').GetNumberOfItems() == 0:
             slicer.util.loadTransform(os.path.join(os.path.split(__file__)[0], 'Ressources/Leksell_Frame/leksell2RAS.h5'))
-        
+
         return self.transformNode_to_numpy4x4(slicer.mrmlScene.GetNodesByName('leksell2RAS').GetItemAsObject(0))
-    
+
     def GetRAStoRASpatTrans(self):
         import numpy as np
         return self.transformNode_to_numpy4x4(self.frameTransform_selectionCombo.currentNode())
-   
+
     def RAStoRASpat(self, xyz):
         import numpy as np
         res = np.dot(self.GetRAStoRASpatTrans(), np.array(xyz+[1])).tolist()[:3]
@@ -420,28 +427,28 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
         #self.referenceImage_selectionCombo.currentNode().GetIJKToRASDirectionMatrix(vtkMat)
         #IJKtoPatRAS = np.array([vtkMat.GetElement(i,j) for i in range(4)for j in range(4)]).reshape([4,4])
         print("IJK2RAS: %s"%str(IJKtoPatRAS))
-        
+
         ##################################################################################################################
         ########## WARNING We add the LPS2RAS matrix in between, this has been determined experimentally with the code:
-        
+
         ########CT_mrml = slicer.mrmlScene.GetNodesByName('CTpreop_(CT)').GetItemAsObject(0)
         ########mat=vtk.vtkMatrix4x4()
         ########CT_mrml.GetIJKToRASDirectionMatrix(mat)
         ########CT_mrml = np.array([mat.GetElement(i,j) for i in range(4)for j in range(4)]).reshape([4,4])
-        
+
         ########CT_itk = siu.PullVolumeFromSlicer('CTpreop_(CT)')
         ########CT_ijk2ras = np.zeros([4,4])
         ########CT_ijk2ras[:3,:3] = np.array(CT_itk.GetDirection()).reshape([3,3])
         ########CT_ijk2ras[:3,3] = np.array(CT_itk.GetOrigin())
         ########CT_ijk2ras[3,3]=1
-        
+
         #########divide the two matrices and round:
         ########np.dot(CT_ijk2ras, np.linalg.inv(CT_mrml))
         ##################################################################################################################
-        
+
         LPS2RAS = np.array([-1,0,0,0, 0,-1,0,0, 0,0,1,0, 0,0,0,1]).reshape([4,4])
         return np.dot( np.linalg.inv(IJKtoPatRAS), LPS2RAS)
-    
+
     def RASpatToIJK(self, xyz):
         import numpy as np
         #return np.dot(np.linalg.inv(IJKtoPatRAS), np.dot( np.linalg.inv(LPS2RAS), np.array(xyz+[1]))).tolist()[:3]
@@ -452,7 +459,7 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
         return np.dot(self.GetRASpatToIJKtrans(), 
                       np.dot(self.GetRAStoRASpatTrans(), 
                              np.dot(self.GetXYZtoRASTrans(), self.GetTrajectoryTransform(x,y,z,r,a))))
-    
+
     def GetLeksell2RAStrans(self, x,y,z,r,a):
         import numpy as np
         return np.dot(self.GetXYZtoRASTrans(), self.GetTrajectoryTransform(x,y,z,r,a))
@@ -462,14 +469,14 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
         from vtk import vtkMatrix4x4
         vtkMat = vtkMatrix4x4()
         node.GetMatrixTransformFromWorld(vtkMat)
-        
+
         return np.array([vtkMat.GetElement(i,j) for i in range(4)for j in range(4)]).reshape([4,4])
-        
+
 
 
     # Refresh Apply button state
     #self.onSelect()
-    
+
     ###################################################################################################
     #connection handler methods
 
