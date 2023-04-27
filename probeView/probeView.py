@@ -56,7 +56,7 @@ class probeViewWidget(ScriptedLoadableModuleWidget):
     # input volume selector
     #
     self.inputSelector = slicer.qMRMLNodeComboBox()
-    self.inputSelector.nodeTypes = ["vtkMRMLMarkupsFiducialNode"]
+    self.inputSelector.nodeTypes = ["vtkMRMLMarkupsLineNode"]
     self.inputSelector.selectNodeUponCreation = True
     self.inputSelector.addEnabled = False
     self.inputSelector.removeEnabled = False
@@ -64,7 +64,7 @@ class probeViewWidget(ScriptedLoadableModuleWidget):
     self.inputSelector.showHidden = False
     self.inputSelector.showChildNodeTypes = False
     self.inputSelector.setMRMLScene( slicer.mrmlScene )
-    self.inputSelector.setToolTip( "fiducial node with the two fist nodes placed along the trajectory." )
+    self.inputSelector.setToolTip( "line placed along the trajectory." )
     parametersFormLayout.addRow("trajectory: ", self.inputSelector)
 
     self.enableRed = qt.QCheckBox()
@@ -147,19 +147,14 @@ class probeViewLogic(ScriptedLoadableModuleLogic):
       return False
     return True
 
-  def run(self, inputFiducials, en_Red, en_Yellow, en_Green):
+  def run(self, inputLine, en_Red, en_Yellow, en_Green):
     """
     Run the actual algorithm
     """
     import numpy as np
-
-    fid=inputFiducials
-    ras0=[0,0,0]
-    ras1=[0,0,0]
-    fid.GetNthFiducialPosition(0, ras0)
-    fid.GetNthFiducialPosition(1, ras1)
-
-    normalVect = np.array(ras1) - np.array(ras0)
+    start = inputLine.GetLineStartPosition()
+    end = inputLine.GetLineEndPosition()
+    normalVect = np.array(end) - np.array(start)
 
     normalVector_unit = normalVect/ np.linalg.norm(normalVect)
 
@@ -212,22 +207,22 @@ class probeViewLogic(ScriptedLoadableModuleLogic):
     
     if en_Red:
       sliceNode = slicer.mrmlScene.GetNodesByName("Red").GetItemAsObject(0)
-      setSlicePoseFromSliceNormalAndPosition(sliceNode, R[:,2].tolist(), ras0)
+      setSlicePoseFromSliceNormalAndPosition(sliceNode, R[:,2].tolist(), start)
     if en_Yellow:
       sliceNode = slicer.mrmlScene.GetNodesByName("Yellow").GetItemAsObject(0)
-      setSlicePoseFromSliceNormalAndPosition(sliceNode, R[:,0].tolist(), ras0)
+      setSlicePoseFromSliceNormalAndPosition(sliceNode, R[:,0].tolist(), start)
     if en_Green:
       sliceNode = slicer.mrmlScene.GetNodesByName("Green").GetItemAsObject(0)
-      setSlicePoseFromSliceNormalAndPosition(sliceNode, R[:,1].tolist(), ras0)
+      setSlicePoseFromSliceNormalAndPosition(sliceNode, R[:,1].tolist(), start)
     
-    if not self.isValidInputOutputData(inputFiducials):
+    if not self.isValidInputOutputData(inputLine):
       slicer.util.errorDisplay('Input volume is the same as output volume. Choose a different output volume.')
       return False
 
     logging.info('Processing started')
 
     # Compute the thresholded output volume using the Threshold Scalar Volume CLI module
-    cliParams = {'InputFiducials': inputFiducials.GetID()}
+    cliParams = {'InputFiducials': inputLine.GetID()}
     
     ## Capture screenshot
     #if enableScreenshots:
