@@ -251,7 +251,7 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
     def GetTrajectoryTransform(self, x,y,z,r,a):
         import numpy as np
         # print('[GetTrajectoryTransform] x: %f | y: %f | z: %f | r: %f | a: %f'%(x,y,z,r,a))
-        r =r*(np.pi/180)
+        r =(-r)*(np.pi/180)
         ringTrans = np.array([[1, 0         , 0         , 0],
                               [0, np.cos(r) , -np.sin(r), 0],
                               [0, np.sin(r) , np.cos(r) , 0],
