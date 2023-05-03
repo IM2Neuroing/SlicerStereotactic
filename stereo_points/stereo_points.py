@@ -251,7 +251,7 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
     def GetTrajectoryTransform(self, x,y,z,r,a):
         import numpy as np
         # print('[GetTrajectoryTransform] x: %f | y: %f | z: %f | r: %f | a: %f'%(x,y,z,r,a))
-        # r =(-r)*(np.pi/180)
+        r =r*(np.pi/180)
         ringTrans = np.array([[1, 0         , 0         , 0],
                               [0, np.cos(r) , -np.sin(r), 0],
                               [0, np.sin(r) , np.cos(r) , 0],
@@ -287,7 +287,7 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
         # posterior:                    [0,0,-2]
         # left lateral, right medial:   [0,2,0]
         # left medial, right lateral:   [0,-2,0]
-        trajTrans = np.dot(carthesianTrans, np.dot(ringTrans, arcTrans))
+        trajTrans = carthesianTrans @ ringTrans @ arcTrans
         print("=============== trajectory transform ===============")
         print(trajTrans)
 
@@ -329,7 +329,7 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
     def addPointFromStereoSetting(self, tableNode, x, y, z, r, a, d, label):
         row = tableNode.AddEmptyRow()
         # print('[addPointFromStereoSetting] x: %f | y: %f | z: %f | r: %f | a: %f'%(x,y,z,r,a))
-        xyz = self.GetXYZcoordFromStereoSetings(x,y,z,r,a, d)
+        X,Y,Z,_ = self.GetXYZcoordFromStereoSetings(x,y,z,r,a,d)
 
         trajTransform = slicer.vtkMRMLTransformNode()
         trajTransform.SetName(label)
@@ -345,9 +345,9 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
         tableNode.SetCellText(row, tableNode.GetColumnIndex('a'), '%.02f'%a)
         tableNode.SetCellText(row, tableNode.GetColumnIndex('d'), '%.02f'%d)
 
-        tableNode.SetCellText(row, tableNode.GetColumnIndex('X'), '%.02f'%xyz[0])
-        tableNode.SetCellText(row, tableNode.GetColumnIndex('Y'), '%.02f'%xyz[1])
-        tableNode.SetCellText(row, tableNode.GetColumnIndex('Z'), '%.02f'%xyz[2])
+        tableNode.SetCellText(row, tableNode.GetColumnIndex('X'), '%.02f'%X)
+        tableNode.SetCellText(row, tableNode.GetColumnIndex('Y'), '%.02f'%Y)
+        tableNode.SetCellText(row, tableNode.GetColumnIndex('Z'), '%.02f'%Z)
         self.updatePointsCoordsFromXYZ(tableNode,
                                        self.referenceImage_selectionCombo.currentNode(),
                                        self.frameTransform_selectionCombo.currentNode())
@@ -387,7 +387,7 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
         fiducialNode.RemoveAllMarkups()
 
         for iRow in range(tableNode.GetNumberOfRows()):
-            fiducialNode.AddControlPoint(vtk.vtkVector3d([ float(tableNode.GetCellText(iRow, tableNode.GetColumnIndex('R')))
+            fiducialNode.AddControlPointWorld(vtk.vtkVector3d([ float(tableNode.GetCellText(iRow, tableNode.GetColumnIndex('R')))
                                                           ,float(tableNode.GetCellText(iRow, tableNode.GetColumnIndex('A')))
                                                           , float(tableNode.GetCellText(iRow, tableNode.GetColumnIndex('S')))
                                                           ]), tableNode.GetCellText(iRow, tableNode.GetColumnIndex('Marker'))
