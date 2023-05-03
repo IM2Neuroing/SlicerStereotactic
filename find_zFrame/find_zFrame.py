@@ -408,15 +408,17 @@ class find_zFrameLogic(ScriptedLoadableModuleLogic):
         zFrameSegmentationNode = slicer.vtkMRMLSegmentationNode()
         zFrameSegmentationNode.SetName("zFrame_seg")
         slicer.mrmlScene.AddNode(zFrameSegmentationNode)
+        zFrameSegmentationNode.CreateDefaultDisplayNodes()  # only needed for display
         zFrameSegmentationNode.SetReferenceImageGeometryParameterFromVolumeNode(outputVolume)
         zFrameSegmentationNode.GetSegmentation().AddEmptySegment('zFrame')
         
         segmentEditorWidget = slicer.qMRMLSegmentEditorWidget()
         segmentEditorWidget.setMRMLScene(slicer.mrmlScene)
-        segmentEditorNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentEditorNode")
+        segmentEditorNode = slicer.vtkMRMLSegmentEditorNode()
+        slicer.mrmlScene.AddNode(segmentEditorNode)
         segmentEditorWidget.setMRMLSegmentEditorNode(segmentEditorNode)
         segmentEditorWidget.setSegmentationNode(zFrameSegmentationNode)
-        segmentEditorWidget.setMasterVolumeNode(outputVolume)
+        segmentEditorWidget.setSourceVolumeNode(outputVolume)
 
         segmentEditorWidget.setActiveEffectByName("Threshold")
         effect = segmentEditorWidget.activeEffect()
@@ -490,7 +492,7 @@ class find_zFrameLogic(ScriptedLoadableModuleLogic):
         icp.Update()
         outputMatrix = vtk.vtkMatrix4x4()
         icp.GetMatrix(outputMatrix)
-        outputTransform.SetAndObserveMatrixTransformToParent(outputMatrix)
+        outputTransform.SetMatrixTransformToParent(outputMatrix)
         
         logging.info('ICP registration done')
 

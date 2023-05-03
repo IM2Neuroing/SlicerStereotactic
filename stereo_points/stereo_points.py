@@ -333,7 +333,7 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
 
         trajTransform = slicer.vtkMRMLTransformNode()
         trajTransform.SetName(label)
-        trajTransform.SetAndObserveMatrixTransformToParent(slicer.util.vtkMatrixFromArray(self.GetTrajectoryTransform(x, y, z, r, a)))
+        trajTransform.SetMatrixTransformToParent(slicer.util.vtkMatrixFromArray(self.GetTrajectoryTransform(x, y, z, r, a)))
         slicer.mrmlScene.AddNode(trajTransform)
 
         tableNode.SetCellText(row, tableNode.GetColumnIndex('Marker'), label)
@@ -384,7 +384,7 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
             tableNode.SetCellText(r, tableNode.GetColumnIndex('S'), '%.02f'%thisPosRAS[2])
 
     def table2ControlPoint(self, tableNode, fiducialNode):
-        fiducialNode.RemoveAllMarkups()
+        fiducialNode.RemoveAllControlPoints()
 
         for iRow in range(tableNode.GetNumberOfRows()):
             fiducialNode.AddControlPointWorld(vtk.vtkVector3d([ float(tableNode.GetCellText(iRow, tableNode.GetColumnIndex('R')))
@@ -392,7 +392,7 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
                                                           , float(tableNode.GetCellText(iRow, tableNode.GetColumnIndex('S')))
                                                           ]), tableNode.GetCellText(iRow, tableNode.GetColumnIndex('Marker'))
                                      )
-            fiducialNode.SetNthMarkupLocked(fiducialNode.GetNumberOfControlPoints()-1, True)
+            fiducialNode.SetNthControlPointLocked(fiducialNode.GetNumberOfControlPoints()-1, True)
 
     def XYZtoRAS(self, xyz):
         import numpy as np
