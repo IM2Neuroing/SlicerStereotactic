@@ -77,25 +77,29 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
         self.fiducialGroup_selectionCombo.setToolTip("Select line node for coordinates conversion")
         self.stereoPointsFormLayout.addRow('Trajectory', self.fiducialGroup_selectionCombo)
 
-        # # Create and set up widget that contains a single "place control point" button. The widget can be placed in the module GUI.
-        # self.placeWidget = slicer.qSlicerMarkupsPlaceWidget()
-        # self.placeWidget.setMRMLScene(slicer.mrmlScene)
-        # self.placeWidget.buttonsVisible = True
-        # self.placeWidget.PlaceButton.hide()
-        # self.placeWidget.DeleteButton.hide()
-        # self.placeWidget.MoreButton.show()
-        # self.placeWidget.PlaceMenu.hide()
-        #
-        # self.placeWidget.deleteAllControlPointsOptionVisible = False
-        #
-        # self.colorButton = slicer.util.findChild(self.placeWidget, 'ColorButton')
-        # self.colorButton.show()
-        #
+        # Create and set up widget that contains a single "place control point" button. The widget can be placed in the module GUI.
+        self.placeWidget = slicer.qSlicerMarkupsPlaceWidget()
+        self.placeWidget.setMRMLScene(slicer.mrmlScene)
+        self.placeWidget.buttonsVisible = True
+        self.placeWidget.PlaceButton.hide()
+        self.placeWidget.DeleteButton.hide()
+        self.placeWidget.MoreButton.show()
+        self.placeWidget.PlaceMenu.hide()
+
+        self.placeWidget.deleteAllControlPointsOptionVisible = False
+
+        self.colorButton = slicer.util.findChild(self.placeWidget, 'ColorButton')
+        self.colorButton.show()
+
         # self.lockButton = self.placeWidget.children()[5]
         # self.lockButton.visible = True
-        #
-        # self.placeWidget.show()
-        # self.stereoPointsFormLayout.addRow("Unlock/Lock control points", self.placeWidget)
+
+        self.lockNumberButton = self.placeWidget.children()[6]
+        self.lockNumberButton.visible = False
+
+        # add place widget to the stereoPointsFormLayout
+        self.placeWidget.show()
+        self.stereoPointsFormLayout.addRow("Settings", self.placeWidget)
 
         self.stereoPointsVBoxLayout.addLayout(self.stereoPointsFormLayout)
         self.stereoPointsVBoxLayout.addWidget(self.pointTableView)
@@ -222,11 +226,9 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
         self.pointTableView.setFirstRowLocked(True)
         self.pointTableView.show()
 
-        # self.placeWidget.setCurrentNode(self.fiducialGroup_selectionCombo.currentNode())
-        # self.placeWidget.deleteButton().hide()
+        self.placeWidget.setCurrentNode(self.fiducialGroup_selectionCombo.currentNode())
 
     def onCoordTableModified(self, updatedNode, eventType):
-        logging.debug("enter onCoordTableModified")
         matchingControlPoint_nodeID = self.findMatchingNodeInIdTupleList(self.fiducialNodesToCoordTables_id_tuples,
                                                                          updatedNode.GetID())
         fiducialNode = slicer.mrmlScene.GetNodeByID(matchingControlPoint_nodeID)
@@ -425,55 +427,57 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
             # logging.debug("Variable: recalc RAS= %s", ras)
         # logging.debug('Variable: XYZList = %s', XYZList)
 
-        # trasform XYZ to xyzrad from both points
-        xyzradList = self.XYZ2Leksell(XYZList)
-        # logging.debug("Variable: xyzrad : %s", xyzradList)
+        # XYZList needs two entries
+        if len(XYZList) > 1:
+            # trasform XYZ to xyzrad from both points
+            xyzradList = self.XYZ2Leksell(XYZList)
+            # logging.debug("Variable: xyzrad : %s", xyzradList)
 
-        # store the old labels
-        labels = []
-        for irow in range(tableNode.GetNumberOfRows()):
-            labels.append(tableNode.GetCellText(irow, tableNode.GetColumnIndex('Marker')))
+            # store the old labels
+            labels = []
+            for irow in range(tableNode.GetNumberOfRows()):
+                labels.append(tableNode.GetCellText(irow, tableNode.GetColumnIndex('Marker')))
 
-        # Restart the whole filling
-        # always remove the first
-        for iRow in range(tableNode.GetNumberOfRows()):
-            tableNode.RemoveRow(0)
+            # Restart the whole filling
+            # always remove the first
+            for iRow in range(tableNode.GetNumberOfRows()):
+                tableNode.RemoveRow(0)
 
-        for irow in range(len(xyzradList)):
-            label = labels[irow]
-            [x, y, z, r, a, d] = xyzradList[irow]
-            [X, Y, Z] = XYZList[irow]
-            [R, A, S] = RASList[irow]
-            [i, j, k] = self.RASpatToIJK(self.RAStoRASpat([R, A, S]))
+            for irow in range(len(xyzradList)):
+                label = labels[irow]
+                [x, y, z, r, a, d] = xyzradList[irow]
+                [X, Y, Z] = XYZList[irow]
+                [R, A, S] = RASList[irow]
+                [i, j, k] = self.RASpatToIJK(self.RAStoRASpat([R, A, S]))
 
-            logging.debug("Variable labels:\t%s", labels[irow])
-            logging.debug("Variable xyzrad:\t%s", xyzradList[irow])
-            logging.debug("Variable XYZ:\t%s", XYZList[irow])
-            logging.debug("Variable RAS:\t%s", RASList[irow])
-            logging.debug("Variable ijk:\t%s", [i, j, k])
+                # logging.debug("Variable labels:\t%s", labels[irow])
+                # logging.debug("Variable xyzrad:\t%s", xyzradList[irow])
+                # logging.debug("Variable XYZ:\t%s", XYZList[irow])
+                # logging.debug("Variable RAS:\t%s", RASList[irow])
+                # logging.debug("Variable ijk:\t%s", [i, j, k])
 
-            # Refill Table
-            row = tableNode.AddEmptyRow()
-            tableNode.SetCellText(row, tableNode.GetColumnIndex('Marker'), label)
+                # Refill Table
+                row = tableNode.AddEmptyRow()
+                tableNode.SetCellText(row, tableNode.GetColumnIndex('Marker'), label)
 
-            tableNode.SetCellText(row, tableNode.GetColumnIndex('x'), '%.02f' % x)
-            tableNode.SetCellText(row, tableNode.GetColumnIndex('y'), '%.02f' % y)
-            tableNode.SetCellText(row, tableNode.GetColumnIndex('z'), '%.02f' % z)
-            tableNode.SetCellText(row, tableNode.GetColumnIndex('r'), '%.02f' % r)
-            tableNode.SetCellText(row, tableNode.GetColumnIndex('a'), '%.02f' % a)
-            tableNode.SetCellText(row, tableNode.GetColumnIndex('d'), '%.02f' % d)
+                tableNode.SetCellText(row, tableNode.GetColumnIndex('x'), '%.02f' % x)
+                tableNode.SetCellText(row, tableNode.GetColumnIndex('y'), '%.02f' % y)
+                tableNode.SetCellText(row, tableNode.GetColumnIndex('z'), '%.02f' % z)
+                tableNode.SetCellText(row, tableNode.GetColumnIndex('r'), '%.02f' % r)
+                tableNode.SetCellText(row, tableNode.GetColumnIndex('a'), '%.02f' % a)
+                tableNode.SetCellText(row, tableNode.GetColumnIndex('d'), '%.02f' % d)
 
-            tableNode.SetCellText(row, tableNode.GetColumnIndex('X'), '%.02f' % X)
-            tableNode.SetCellText(row, tableNode.GetColumnIndex('Y'), '%.02f' % Y)
-            tableNode.SetCellText(row, tableNode.GetColumnIndex('Z'), '%.02f' % Z)
+                tableNode.SetCellText(row, tableNode.GetColumnIndex('X'), '%.02f' % X)
+                tableNode.SetCellText(row, tableNode.GetColumnIndex('Y'), '%.02f' % Y)
+                tableNode.SetCellText(row, tableNode.GetColumnIndex('Z'), '%.02f' % Z)
 
-            tableNode.SetCellText(row, tableNode.GetColumnIndex('R'), '%.02f' % R)
-            tableNode.SetCellText(row, tableNode.GetColumnIndex('A'), '%.02f' % A)
-            tableNode.SetCellText(row, tableNode.GetColumnIndex('S'), '%.02f' % S)
+                tableNode.SetCellText(row, tableNode.GetColumnIndex('R'), '%.02f' % R)
+                tableNode.SetCellText(row, tableNode.GetColumnIndex('A'), '%.02f' % A)
+                tableNode.SetCellText(row, tableNode.GetColumnIndex('S'), '%.02f' % S)
 
-            tableNode.SetCellText(row, tableNode.GetColumnIndex('i'), '%.02f' % i)
-            tableNode.SetCellText(row, tableNode.GetColumnIndex('j'), '%.02f' % j)
-            tableNode.SetCellText(row, tableNode.GetColumnIndex('k'), '%.02f' % k)
+                tableNode.SetCellText(row, tableNode.GetColumnIndex('i'), '%.02f' % i)
+                tableNode.SetCellText(row, tableNode.GetColumnIndex('j'), '%.02f' % j)
+                tableNode.SetCellText(row, tableNode.GetColumnIndex('k'), '%.02f' % k)
 
     def XYZ2Leksell(self, XYZList):
         import math
@@ -506,11 +510,9 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
         else:
             ring = 180 - ring
 
-        logging.debug(f"Ring: {ring:.2f} degrees")
-        logging.debug(f"Arc: {arc:.2f} degrees")
-        logging.debug(f"Depth: {distance:.2f}")
-
-        logging.debug("***************TEST***FOO*******************")
+        # logging.debug(f"Ring: {ring:.2f} degrees")
+        # logging.debug(f"Arc: {arc:.2f} degrees")
+        # logging.debug(f"Depth: {distance:.2f}")
 
         xyzradList.append([x1, y1, z1, ring, arc, 0])
         xyzradList.append([x1, y1, z1, ring, arc, distance])
@@ -540,7 +542,7 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
                                     , float(tableNode.GetCellText(iRow, tableNode.GetColumnIndex('S')))
                                  ]), tableNode.GetCellText(iRow, tableNode.GetColumnIndex('Marker'))
                 )
-            fiducialNode.SetNthControlPointLocked(fiducialNode.GetNumberOfControlPoints()-1, True)
+            fiducialNode.SetLocked(True)
 
     def XYZtoRAS(self, xyz):
         import numpy as np
