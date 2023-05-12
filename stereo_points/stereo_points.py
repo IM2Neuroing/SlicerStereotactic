@@ -361,6 +361,7 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
         slicer.mrmlScene.AddNode(newTable)
 
     def addPointFromStereoSetting(self, tableNode, x, y, z, r, a, d, label):
+        logging.debug("addPointFromStereoSetting needed")
         row = tableNode.AddEmptyRow()
         # print('[addPointFromStereoSetting] x: %f | y: %f | z: %f | r: %f | a: %f'%(x,y,z,r,a))
         X, Y, Z, _ = self.GetXYZcoordFromStereoSetings(x, y, z, r, a, d)
@@ -478,6 +479,44 @@ class stereo_pointsWidget(ScriptedLoadableModuleWidget):
                 tableNode.SetCellText(row, tableNode.GetColumnIndex('i'), '%.02f' % i)
                 tableNode.SetCellText(row, tableNode.GetColumnIndex('j'), '%.02f' % j)
                 tableNode.SetCellText(row, tableNode.GetColumnIndex('k'), '%.02f' % k)
+        else:
+            # store the old labels
+            labels = []
+            for irow in range(tableNode.GetNumberOfRows()):
+                labels.append(tableNode.GetCellText(irow, tableNode.GetColumnIndex('Marker')))
+
+            # Restart the whole filling
+            # always remove the first
+            for iRow in range(tableNode.GetNumberOfRows()):
+                tableNode.RemoveRow(0)
+
+            for irow in range(len(XYZList)):
+                label = labels[irow]
+                [X, Y, Z] = XYZList[irow]
+                [R, A, S] = RASList[irow]
+                [i, j, k] = self.RASpatToIJK(self.RAStoRASpat([R, A, S]))
+
+                # logging.debug("Variable labels:\t%s", labels[irow])
+                # logging.debug("Variable XYZ:\t%s", XYZList[irow])
+                # logging.debug("Variable RAS:\t%s", RASList[irow])
+                # logging.debug("Variable ijk:\t%s", [i, j, k])
+
+                # Refill Table
+                row = tableNode.AddEmptyRow()
+                tableNode.SetCellText(row, tableNode.GetColumnIndex('Marker'), label)
+
+                tableNode.SetCellText(row, tableNode.GetColumnIndex('X'), '%.02f' % X)
+                tableNode.SetCellText(row, tableNode.GetColumnIndex('Y'), '%.02f' % Y)
+                tableNode.SetCellText(row, tableNode.GetColumnIndex('Z'), '%.02f' % Z)
+
+                tableNode.SetCellText(row, tableNode.GetColumnIndex('R'), '%.02f' % R)
+                tableNode.SetCellText(row, tableNode.GetColumnIndex('A'), '%.02f' % A)
+                tableNode.SetCellText(row, tableNode.GetColumnIndex('S'), '%.02f' % S)
+
+                tableNode.SetCellText(row, tableNode.GetColumnIndex('i'), '%.02f' % i)
+                tableNode.SetCellText(row, tableNode.GetColumnIndex('j'), '%.02f' % j)
+                tableNode.SetCellText(row, tableNode.GetColumnIndex('k'), '%.02f' % k)
+
 
     def XYZ2Leksell(self, XYZList):
         import math
