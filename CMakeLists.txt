@@ -8,8 +8,8 @@ set(EXTENSION_HOMEPAGE "https://github.com/IM2Neuroing/Slicer-StereoSlicer.git")
 set(EXTENSION_CATEGORY "Navigation")
 set(EXTENSION_CONTRIBUTORS "Dorian Vogel (FHNW (CH), LiU (SE)), Marc Jermann (FHNW (CH))")
 set(EXTENSION_DESCRIPTION "An extension to use stereotactic arc settings in slicer")
-set(EXTENSION_ICONURL "http://www.example.com/Slicer/Extensions/StereoSlicer.png")
-set(EXTENSION_SCREENSHOTURLS "http://www.example.com/Slicer/Extensions/StereoSlicer/Screenshots/1.png")
+set(EXTENSION_ICONURL "https://raw.githubusercontent.com/IM2Neuroing/Slicer-StereoSlicer/master/StereoSlicer.png")
+set(EXTENSION_SCREENSHOTURLS "https://raw.githubusercontent.com/IM2Neuroing/Slicer-StereoSlicer/master/resources/Images/Screenshot_02_StereotacticTrajectories.png")
 set(EXTENSION_DEPENDS "NA") # Specified as a space separated string, a list or 'NA' if any
 
 #-----------------------------------------------------------------------------
