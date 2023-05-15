@@ -4,9 +4,9 @@ project(StereoSlicer)
 
 #-----------------------------------------------------------------------------
 # Extension meta-information
-set(EXTENSION_HOMEPAGE "https://github.com/d-vogel/Slicer-StereoSlicer")
+set(EXTENSION_HOMEPAGE "https://github.com/IM2Neuroing/Slicer-StereoSlicer.git")
 set(EXTENSION_CATEGORY "Navigation")
-set(EXTENSION_CONTRIBUTORS "Dorian Vogel (FHNW (CH), LiU (SE))")
+set(EXTENSION_CONTRIBUTORS "Dorian Vogel (FHNW (CH), LiU (SE)), Marc Jermann (FHNW (CH))")
 set(EXTENSION_DESCRIPTION "An extension to use stereotactic arc settings in slicer")
 set(EXTENSION_ICONURL "http://www.example.com/Slicer/Extensions/StereoSlicer.png")
 set(EXTENSION_SCREENSHOTURLS "http://www.example.com/Slicer/Extensions/StereoSlicer/Screenshots/1.png")

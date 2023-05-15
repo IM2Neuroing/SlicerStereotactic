@@ -18,7 +18,7 @@ class probeView(ScriptedLoadableModule):
     self.parent.title = "Probe View" # TODO make this more human readable by adding spaces
     self.parent.categories = ["Navigation"]
     self.parent.dependencies = []
-    self.parent.contributors = ["Dorian VOGEL (FHNW, LiU)"] # replace with "Firstname Lastname (Organization)"
+    self.parent.contributors = ["Dorian Vogel (FHNW, LiU), Marc Jermann (FHNW)"] # replace with "Firstname Lastname (Organization)"
     self.parent.helpText = """
 This is an example of scripted loadable module bundled in an extension.
 It performs a simple thresholding on the input volume and optionally captures a screenshot.

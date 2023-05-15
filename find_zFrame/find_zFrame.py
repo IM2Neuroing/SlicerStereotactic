@@ -19,7 +19,7 @@ class find_zFrame(ScriptedLoadableModule):
         self.parent.title = "Leksell Frame localization"
         self.parent.categories = ["Navigation"]
         self.parent.dependencies = []
-        self.parent.contributors = ["Dorian Vogel (FHNW, LiU)"] # replace with "Firstname Lastname (Organization)"
+        self.parent.contributors = ["Dorian Vogel (FHNW, LiU), Marc Jermann (FHNW)"] # replace with "Firstname Lastname (Organization)"
         self.parent.helpText = u"""
 This module helps segmenting the Z fiducial created by the Leskell frame in MR/CT. The segmented frame can then be registered to an ideal frame, in order to obtain the transformation between the slicer reference space and the stereotactic space in the patient's image.
 """

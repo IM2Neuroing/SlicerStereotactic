@@ -20,7 +20,7 @@ class stereo_points(ScriptedLoadableModule):
         self.parent.title = "Stereotactic points"
         self.parent.categories = ["Navigation"]
         self.parent.dependencies = []
-        self.parent.contributors = ["Dorian Vogel (FHNW, LiU)"]  # replace with "Firstname Lastname (Organization)"
+        self.parent.contributors = ["Dorian Vogel (FHNW, LiU), Marc Jermann (FHNW)"]  # replace with "Firstname Lastname (Organization)"
         self.parent.helpText = u"""
 This module allows entering target points in stereotactic coordinates and have them transformed in RAS space. This requires the use of the "Leksell Frame localization" first. Points are also transformed in the reference image ijk space and the image without ijk2ras transform can also be created.
 """
