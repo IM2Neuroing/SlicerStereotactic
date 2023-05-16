@@ -2,7 +2,7 @@
 
 StereoSlicer is an extension to [3DSlicer](https://www.slicer.org/) allowing to work with stereotactic arc settings (for now only Leksell).
 
-This was presented as ePoster at ESSFN 2021 in Marseille (FR) https://doi.org/10.1159/000520618.
+This was presented as ePoster #26250 at ESSFN 2021 in Marseille (FR) https://doi.org/10.1159/000520618.
 
 In substance, the module allows:
 
@@ -17,3 +17,8 @@ In substance, the module allows:
 # Installation - Tutorial
 
 A small [video tutorial](https://tube.switch.ch/videos/ZSYNlDwMgu) details the installation and use of StereoSlicer with an example case.
+
+# Financial Support
+
+- [University of Applied Sciences and Arts Northwestern Switzerland, School of Life Sciences](https://www.fhnw.ch/en/research-and-services/lifesciences)
+- [Swedish Fondation for Strategic Research, Swedish Reseach Council](https://liu.se/en/research/dbs)
