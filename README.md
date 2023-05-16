@@ -6,12 +6,13 @@ This was presented as ePoster at ESSFN 2021 in Marseille (FR) https://doi.org/10
 
 In substance, the module allows:
 
-- To automatically detect N-shaped markers in stereotactic CT Images
-- To generate the transform that will align the N-shaped markers so they "lay flat on the axial slicing plane", this has the effect of aligning the Leskell coordinate system with the coordinate system in slicer ![Frame Localization](resources/Images/Screenshot_01_FrameLocalization.png?raw=true "Frame Localization")
+- Automatic detection of N-shaped markers in stereotactic CT Images.
+- Generating the transform that will align the N-shaped markers so they "lay flat on the axial slicing plane", this has the effect of aligning the Leskell coordinate system with the coordinate system in slicer ![Frame Localization](resources/Images/Screenshot_01_FrameLocalization.png?raw=true "Frame Localization")
 
-- To place stereotactic points/trajectories with X,Y,Z,Ring,Arc settings. ![Stereotactic Trajectories](resources/Images/Screenshot_02_StereotacticTrajectories.png?raw=true "Stereotactic Trajectories")
+- Placing stereotactic points/trajectories with X, Y, Z, Ring, Arc settings. ![Stereotactic Trajectories](resources/Images/Screenshot_02_StereotacticTrajectories.png?raw=true "Stereotactic Trajectories")
+- Reorienting slices in order to obtain "proview". ![Probe View](resources/Images/Screenshot_03_ProbeView.png?raw=true "Probe View")
 
-- Convert the postion of those points to patient space or image space ![Probe View](resources/Images/Screenshot_03_ProbeView.png?raw=true "Probe View")
+- Converting the postion of those points to patient space or image space.
 
 # Installation - Tutorial
 
