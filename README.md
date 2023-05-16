@@ -1,12 +1,13 @@
 # Decription
 
-StereoSlicer is an extension to [3DSlicer](https://www.slicer.org/) allowing to work with stereotactic arc settings (Leksell)
+StereoSlicer is an extension to [3DSlicer](https://www.slicer.org/) allowing to work with stereotactic arc settings (for now only Leksell).
+
 In substance, the module allows:
 
 - To automatically detect N-shaped markers in stereotactic CT Images
 - To generate the transform that will align the N-shaped markers so they "lay flat on the axial slicing plane", this has the effect of aligning the Leskell coordinate system with the coordinate system in slicer ![Frame Localization](resources/Images/Screenshot_01_FrameLocalization.png?raw=true "Frame Localization")
 
-- To place stereotactic points/trajectories with X,Y,Z,Ring,Arc settings![Stereotactic Trajectories](resources/Images/Screenshot_02_StereotacticTrajectories.png?raw=true "Stereotactic Trajectories")
+- To place stereotactic points/trajectories with X,Y,Z,Ring,Arc settings. ![Stereotactic Trajectories](resources/Images/Screenshot_02_StereotacticTrajectories.png?raw=true "Stereotactic Trajectories")
 
 - Convert the postion of those points to patient space or image space ![Probe View](resources/Images/Screenshot_03_ProbeView.png?raw=true "Probe View")
 
