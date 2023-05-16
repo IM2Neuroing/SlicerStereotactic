@@ -2,6 +2,8 @@
 
 StereoSlicer is an extension to [3DSlicer](https://www.slicer.org/) allowing to work with stereotactic arc settings (for now only Leksell).
 
+This was presented as ePoster at ESSFN 2021 in Marseille (FR) https://doi.org/10.1159/000520618.
+
 In substance, the module allows:
 
 - To automatically detect N-shaped markers in stereotactic CT Images
